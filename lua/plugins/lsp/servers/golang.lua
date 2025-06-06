@@ -18,6 +18,7 @@ function M.setup()
       },
     }
   })
+  lspconfig.golangci_lint_ls.setup {}
 end
 
 M.setup()

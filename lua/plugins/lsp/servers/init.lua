@@ -8,6 +8,8 @@ function M.setup()
   require("plugins.lsp.servers.python")
   require("plugins.lsp.servers.golang")
   require("plugins.lsp.servers.clangd")
+  require("plugins.lsp.servers.web")
+  require("plugins.lsp.servers.json")
 end
 
 M.setup()
