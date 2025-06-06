@@ -1,16 +1,16 @@
 -- lua/config/keymaps.lua
 local map = function(mode, lhs, rhs, desc, silent, expr)
-    silent = silent or false
-    expr = expr or false
-    if desc then
-        desc = "MANIAC_GENERIC: " .. desc
-    end
-    vim.keymap.set(mode, lhs, rhs, { remap = false, silent = silent, expr = expr, desc = desc })
+  silent = silent or false
+  expr = expr or false
+  if desc then
+    desc = "MANIAC_GENERIC: " .. desc
+  end
+  vim.keymap.set(mode, lhs, rhs, { remap = false, silent = silent, expr = expr, desc = desc })
 end
 
 map("x", "<Space>", "<Nop>", "[<Space>] Purposely mapped to nothing", true, false)
 for _, m in ipairs({ "Q", "<left>", "<right>", "<up>", "<down>" }) do
-    map("n", m, "<Nop>", "[" .. m .. "] Purposely mapped to nothing", true, false)
+  map("n", m, "<Nop>", "[" .. m .. "] Purposely mapped to nothing", true, false)
 end
 
 map("n", "<c-o>", "<c-o>zz", "[<c-o>] Jumplist-previous with cursor in middle of buffer", false, false)
@@ -28,22 +28,22 @@ map("n", "tc", vim.cmd.tabclose, "[tc] [T]ab [C]lose", true, false)
 map("t", "<ESC>", "<C-\\><C-n>", "[<ESC>] [Esc]ape into normal mode in terminal", false, false)
 map("n", "<SPACE>", ":noh<BAR>:echo<CR>", "[<SPACE>] Stop highlighting text with <SPACE>", false, false)
 map(
-    "n",
-    "<leader>ev",
-    ":tabedit " .. vim.fn.expand("$HOME") .. "/.config/nvim<CR>",
-    "[<leader>ev] Tab edit [E]dit Neo[V]im",
-    true,
-    false
+  "n",
+  "<leader>ev",
+  ":tabedit " .. vim.fn.expand("$HOME") .. "/.config/nvim<CR>",
+  "[<leader>ev] Tab edit [E]dit Neo[V]im",
+  true,
+  false
 )
 map("n", "J", "mzJ`z", "[J] Retain cursor position whilst joining lines", false, false)
 map("x", "<leader>p", '"_dP', "[<leader>p] Retain yanked content whilst pasting in visual mode", false, false)
 map(
-    "n",
-    "<leader>cd",
-    ":cd %:p:h<CR>:pwd<CR>",
-    "[<leader>cd] [CD] to current buffer's curret working directory",
-    false,
-    false
+  "n",
+  "<leader>cd",
+  ":cd %:p:h<CR>:pwd<CR>",
+  "[<leader>cd] [CD] to current buffer's curret working directory",
+  false,
+  false
 )
 map("x", "<C-y>", '"+y', "[<C-y>] Copy to system clipboard", true, false)
 map({ "n", "x" }, "j", 'v:count == 0 ? "gj" : "j"', "[j] Better navigation around wrapped lines", true, true)

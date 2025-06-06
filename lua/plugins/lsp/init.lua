@@ -2,7 +2,7 @@
 return {
   {
     "neovim/nvim-lspconfig",
-    event = {'BufReadPre', 'BufNewFile'},
+    event = { 'BufReadPre', 'BufNewFile' },
     pin = true,
     dependencies = {
       --  Easier downloads of LSP servers via mason registry
