@@ -1,0 +1,39 @@
+-- lua/plugins/lsp/servers/clangd.lua
+local M = {}
+
+function M.setup()
+  -- For C/C++
+  local lspconfig = require("lspconfig")
+  lspconfig.clangd.setup {}
+  lspconfig.clangd.setup({
+    capabilities = capabilities,
+    on_attach = function(client, bufnr)
+      -- Apply standard keymaps
+      on_attach(client, bufnr)
+
+      -- Add C/C++ specific keymaps
+      local opts = { buffer = bufnr, remap = false }
+      vim.keymap.set("n", "<leader>ch", "<cmd>ClangdSwitchSourceHeader<cr>", opts)
+
+      -- Disable clangd's syntax highlighting in favor of treesitter
+      client.server_capabilities.semanticTokensProvider = nil
+    end,
+    cmd = {
+      "clangd",
+      "--background-index",
+      "--clang-tidy",
+      "--header-insertion=iwyu",
+      "--completion-style=detailed",
+      "--function-arg-placeholders",
+      "--fallback-style=llvm",
+    },
+    init_options = {
+      usePlaceholders = true,
+      completeUnimported = true,
+      clangdFileStatus = true,
+    },
+  })
+end
+
+M.setup()
+return M
