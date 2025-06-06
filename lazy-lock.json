@@ -5,6 +5,7 @@
   "cmp-async-path": { "branch": "main", "commit": "0ed1492f59e730c366d261a5ad822fa37e44c325" },
   "cmp-buffer": { "branch": "main", "commit": "b74fab3656eea9de20a9b8116afa3cfc4ec09657" },
   "cmp-cmdline": { "branch": "main", "commit": "d126061b624e0af6c3a556428712dd4d4194ec6d" },
+  "cmp-nvim-lsp": { "branch": "main", "commit": "a8912b88ce488f411177fc8aed358b04dc246d7b" },
   "cmp-nvim-lsp-signature-help": { "branch": "main", "commit": "031e6ba70b0ad5eee49fd2120ff7a2e325b17fa7" },
   "cmp-nvim-lua": { "branch": "main", "commit": "f12408bdb54c39c23e67cab726264c10db33ada8" },
   "complextras.nvim": { "branch": "master", "commit": "2530c83b2da70069994d52d524821870a40ab560" },

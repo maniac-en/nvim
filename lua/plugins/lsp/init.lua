@@ -30,8 +30,17 @@ return {
       },
       -- LSP progress indicator
       { "j-hui/fidget.nvim", opts = {}, },
+      -- nvim-cmp source for neovim's builtin LSP client
+      "hrsh7th/cmp-nvim-lsp",
     },
     config = function()
+      local lspconfig_defaults = require("lspconfig").util.default_config
+      lspconfig_defaults.capabilities = vim.tbl_deep_extend(
+        'force',
+        lspconfig_defaults.capabilities,
+        require("cmp_nvim_lsp").default_capabilities()
+      )
+
       require("plugins.lsp.config")
       require("plugins.lsp.servers")
       require("plugins.lsp.autocmds")

@@ -58,12 +58,11 @@ return {
       cmp.setup({
 
         sources = {
+          { name = "nvim_lua" },
           { name = "nvim_lsp" },
-          { name = "nvim_lua",   priority = 900, keyword_length = 2 },
-          { name = "async_path", priority = 500 },
+          { name = "async_path" },
           {
             name = "buffer",
-            priority = 300,
             option = {
               get_bufnrs = function()
                 -- Complete from visible buffers
@@ -89,19 +88,19 @@ return {
         },
 
         formatting = {
-          fields = { "abbr", "kind", "menu" },
+          fields = { 'menu', 'abbr', 'kind' },
           expandable_indicator = true,
           format = function(entry, vim_item)
             -- Format with lspkind
             vim_item = lspkind.cmp_format({
               mode = "symbol_text",
               menu = {
-                buffer = "[Buffer]",
-                nvim_lsp = "[LSP]",
-                nvim_lua = "[Lua]",
-                async_path = "[Path]",
-                vim_dadbod_completion = "[DB]",
-                nvim_lsp_signature_help = "[Sig]",
+                nvim_lsp = "λ",
+                async_path = "🖫",
+                buffer = "Ω",
+                nvim_lua = 'Π',
+                vim_dadbod_completion = "🛢",
+                nvim_lsp_signature_help = "〽",
               },
               maxwidth = 50,
             })(entry, vim_item)

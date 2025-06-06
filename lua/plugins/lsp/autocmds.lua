@@ -8,6 +8,10 @@ function M.setup()
       local client = vim.lsp.get_client_by_id(args.data.client_id)
       if not client then return end
 
+      -- Disable semantic highlights: A language server can apply new highlights
+      -- to your code, this is known as semantic tokens.
+      client.server_capabilities.semanticTokensProvider = nil
+
       ---@diagnostic disable-next-line: missing-parameter, param-type-mismatch
       if client:supports_method('textDocument/formatting') then
         -- Format the current buffer on save
