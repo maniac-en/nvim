@@ -44,33 +44,45 @@ opt.encoding = "utf-8"                    -- File encoding
 ----------------
 
 -- Status display
-o.laststatus = 0 -- Hide statusline, using winbar instead
+vim.o.laststatus = 0 -- Hide statusline, using winbar instead
 
--- Custom winbar with conditional display
-local function get_tailored_winbar()
-  -- Don't show for certain file types
-  local excluded_filetypes = {
-    "help",
-    "NvimTree",
-    "TelescopePrompt",
-    "qf",
-    "fugitive",
-    "lazy",
-    "mason",
-    "oil",
-  }
+-- -- Custom winbar
+-- -- o.winbar = "%=%m %y %F (%l/%L:%v) (%b 0x%B)%="
+-- o.winbar = "%=%m %y %F (%l/%L:%v)%="
 
-  local buf_ft = vim.bo.filetype
-  for _, ft in ipairs(excluded_filetypes) do
-    if ft == buf_ft then
-      return "" -- No winbar for excluded filetypes
-    end
+-- Custom winbar function for better control
+local function get_winbar()
+  local parts = {}
+
+  -- Modified flag
+  if vim.bo.modified then
+    table.insert(parts, '[+]')
+  elseif vim.bo.readonly then
+    table.insert(parts, '[RO]')
   end
 
-  -- return "%=%m %y %F (%l/%L:%v) (%b 0x%B)%="
-  return "%=%m %y %F (%l/%L:%v)%="
+  -- File type (only if not empty)
+  if vim.bo.filetype ~= '' then
+    table.insert(parts, '[' .. vim.bo.filetype .. ']')
+  end
+
+  -- Relative file path (more useful than full path, less cluttered than just filename)
+  local filepath = vim.fn.expand('%:~:.')
+  if filepath == '' then
+    filepath = '[No Name]'
+  end
+  table.insert(parts, filepath)
+
+  -- Line/column info
+  table.insert(parts, '(' .. vim.fn.line('.') .. '/' .. vim.fn.line('$') .. ':' .. vim.fn.col('.') .. ')')
+
+  return '%=' .. table.concat(parts, ' ') .. '%='
 end
-o.winbar = get_tailored_winbar()
+-- Set winbar using the custom function
+vim.o.winbar = '%!v:lua.get_winbar()'
+
+-- Make the function globally accessible
+_G.get_winbar = get_winbar
 
 -- Window management
 opt.splitbelow = true -- Open horizontal splits below
