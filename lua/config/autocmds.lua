@@ -59,7 +59,7 @@ vim.api.nvim_create_autocmd({ 'CursorMoved', 'DiagnosticChanged' }, {
   group = vim.api.nvim_create_augroup('diagnostic_virt_text_hide', {}),
   callback = function(ev)
     local cursor_pos = vim.api.nvim_win_get_cursor(0)
-    local lnum = cursor_pos[1] - 1  -- Convert to 0-based index
+    local lnum = cursor_pos[1] - 1 -- Convert to 0-based index
 
     local hidden_lnum = vim.b[ev.buf].diagnostic_hidden_lnum
     if hidden_lnum and hidden_lnum ~= lnum then
@@ -88,5 +88,30 @@ vim.api.nvim_create_autocmd('ModeChanged', {
   group = vim.api.nvim_create_augroup('diagnostic_redraw', {}),
   callback = function()
     pcall(vim.diagnostic.show)
+  end
+})
+
+-- Organize go imports automatically on save
+-- Ref: https://cs.opensource.google/go/x/tools/+/refs/tags/v0.18.0:gopls/doc/vim.md#neovim-imports
+autocmd("BufWritePre", {
+  pattern = "*.go",
+  callback = function()
+    local params = vim.lsp.util.make_range_params()
+    params.context = { only = { "source.organizeImports" } }
+    -- buf_request_sync defaults to a 1000ms timeout. Depending on your
+    -- machine and codebase, you may want longer. Add an additional
+    -- argument after params if you find that you have to write the file
+    -- twice for changes to be saved.
+    -- E.g., vim.lsp.buf_request_sync(0, "textDocument/codeAction", params, 3000)
+    local result = vim.lsp.buf_request_sync(0, "textDocument/codeAction", params)
+    for cid, res in pairs(result or {}) do
+      for _, r in pairs(res.result or {}) do
+        if r.edit then
+          local enc = (vim.lsp.get_client_by_id(cid) or {}).offset_encoding or "utf-16"
+          vim.lsp.util.apply_workspace_edit(r.edit, enc)
+        end
+      end
+    end
+    vim.lsp.buf.format({ async = false })
   end
 })

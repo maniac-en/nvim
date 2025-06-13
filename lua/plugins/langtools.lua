@@ -36,12 +36,18 @@ local function setup_langtools()
   -- Golang
   create_runner("go", "go run %")
 
-  -- Add go test command with special options
+  -- Golang test shortcuts
   vim.api.nvim_create_autocmd("FileType", {
     pattern = "go",
     callback = function()
       local buf = vim.api.nvim_get_current_buf()
       vim.keymap.set("n", "<leader>t", function()
+        vim.cmd("write")
+        local command = string.format(":vsp term://go test -v %%:p:h/*.go")
+        vim.cmd(command)
+        vim.cmd("startinsert")
+      end, { buffer = buf, desc = "MANIAC_GOLANG: [<leader>t] [T]est", silent = true })
+      vim.keymap.set("n", "<leader>dt", function()
         vim.cmd("write")
         local main_go_file = vim.fn.input("Main GO file > ")
         if main_go_file == "" then
@@ -52,7 +58,7 @@ local function setup_langtools()
         local command = string.format(":vsp term://go test -v %%:h/%s %%", main_go_file)
         vim.cmd(command)
         vim.cmd("startinsert")
-      end, { buffer = buf, desc = "MANIAC_GOLANG: [<leader>t] go test", silent = true })
+      end, { buffer = buf, desc = "MANIAC_GOLANG: [<leader>dt] [D]ummy [T]est", silent = true })
     end
   })
 
@@ -131,7 +137,7 @@ end
 
 return {
   {
-    "nvim-lua/plenary.nvim",     -- Use a real plugin, even if minimal
+    "nvim-lua/plenary.nvim", -- Use a real plugin, even if minimal
     name = "langtools",
     config = setup_langtools,
   },
