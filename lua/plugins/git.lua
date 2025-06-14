@@ -52,4 +52,12 @@ return {
       word_diff = false,          -- Can be toggled via command
     },
   },
+
+  --  GV: A git commit browser in Vim
+  {
+    "junegunn/gv.vim",
+    dependencies = {
+      "tpope/vim-fugitive",
+    }
+  }
 }
