@@ -90,7 +90,7 @@ opt.splitright = true -- Open vertical splits to the right
 
 -- Appearance
 opt.cursorline = true                    -- Highlight the current line
-opt.colorcolumn = "80"                   -- Show column guide
+-- opt.colorcolumn = "80"                   -- Show column guide
 opt.signcolumn = "yes"                   -- Always show sign column
 opt.termguicolors = true                 -- True color support
 opt.display = "lastline,uhex"            -- Show as much as possible of last line
