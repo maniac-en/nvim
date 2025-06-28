@@ -12,6 +12,9 @@ function M.setup()
       -- to your code, this is known as semantic tokens.
       client.server_capabilities.semanticTokensProvider = nil
 
+      -- Enable workspace diagnostics
+      require("workspace-diagnostics").populate_workspace_diagnostics(client, args.buf)
+
       ---@diagnostic disable-next-line: missing-parameter, param-type-mismatch
       if client:supports_method('textDocument/formatting') then
         -- Format the current buffer on save

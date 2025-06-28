@@ -32,6 +32,8 @@ return {
       { "j-hui/fidget.nvim", opts = {}, },
       -- nvim-cmp source for neovim's builtin LSP client
       "hrsh7th/cmp-nvim-lsp",
+      -- get workspace diagnostics
+      "artemave/workspace-diagnostics.nvim",
     },
     config = function()
       local lspconfig_defaults = require("lspconfig").util.default_config
