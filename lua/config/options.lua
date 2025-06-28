@@ -46,43 +46,9 @@ opt.encoding = "utf-8"                    -- File encoding
 -- Status display
 vim.o.laststatus = 0 -- Hide statusline, using winbar instead
 
--- -- Custom winbar
--- -- o.winbar = "%=%m %y %F (%l/%L:%v) (%b 0x%B)%="
--- o.winbar = "%=%m %y %F (%l/%L:%v)%="
-
--- Custom winbar function for better control
-local function get_winbar()
-  local parts = {}
-
-  -- Modified flag
-  if vim.bo.modified then
-    table.insert(parts, '[+]')
-  elseif vim.bo.readonly then
-    table.insert(parts, '[RO]')
-  end
-
-  -- File type (only if not empty)
-  if vim.bo.filetype ~= '' then
-    table.insert(parts, '[' .. vim.bo.filetype .. ']')
-  end
-
-  -- Relative file path (more useful than full path, less cluttered than just filename)
-  local filepath = vim.fn.expand('%:~:.')
-  if filepath == '' then
-    filepath = '[No Name]'
-  end
-  table.insert(parts, filepath)
-
-  -- Line/column info
-  table.insert(parts, '(' .. vim.fn.line('.') .. '/' .. vim.fn.line('$') .. ':' .. vim.fn.col('.') .. ')')
-
-  return '%=' .. table.concat(parts, ' ') .. '%='
-end
--- Set winbar using the custom function
-vim.o.winbar = '%!v:lua.get_winbar()'
-
--- Make the function globally accessible
-_G.get_winbar = get_winbar
+-- Custom winbar
+-- o.winbar = "%=%m %y %F (%l/%L:%v) (%b 0x%B)%="
+o.winbar = "%=%m %y %F (%l/%L:%v)%="
 
 -- Window management
 opt.splitbelow = true -- Open horizontal splits below
