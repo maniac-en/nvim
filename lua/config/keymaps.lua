@@ -26,7 +26,8 @@ map("n", "tn", ":tabe<SPACE>", "[tn] [T]ab [N]ew", false, false)
 map("n", "tc", vim.cmd.tabclose, "[tc] [T]ab [C]lose", true, false)
 
 map("t", "<ESC>", "<C-\\><C-n>", "[<ESC>] [Esc]ape into normal mode in terminal", false, false)
-map("n", "<SPACE>", ":noh<BAR>:echo<CR>", "[<SPACE>] Stop highlighting text with <SPACE>", false, false)
+-- not needed when vim.o.hlsearch = false, also just use <C-L>
+-- map("n", "<SPACE>", ":noh<BAR>:echo<CR>", "[<SPACE>] Stop highlighting text with <SPACE>", false, false)
 map(
   "n",
   "<leader>ev",
@@ -53,7 +54,11 @@ map({ "n", "x" }, "$", 'v:count == 0 ? "g$" : "$"', "[$] Better navigation aroun
 map("x", "<leader>s", ":sort u<CR>", "[<leader>s] Sort selection uniquely", true, false)
 map("x", "J", ":m '>+1<CR>gv=gv", "[J] Move selected lines up/down with indentation", false, false)
 map("x", "K", ":m '<-2<CR>gv=gv", "[K] Move selected lines up/down with indentation", false, false)
-map("n", "<C-j>", ":cnext<CR>", "[<C-j>] Next quickfix list hit", false, false)
-map("n", "<C-k>", ":cprevious<CR>", "[<C-k>] Prev quickfix list hit", false, false)
-map("n", "<M-j>", ":lnext<CR>", "[<M-j>] Next location list hit", false, false)
-map("n", "<M-k>", ":lprevious<CR>", "[<M-k>] Prev location list hit", false, false)
+
+-- Just use [q, ]q, [Q, ]Q, [CTRL-Q, ]CTRL-Q
+-- map("n", "<C-j>", ":cnext<CR>", "[<C-j>] Next quickfix list hit", false, false)
+-- map("n", "<C-k>", ":cprevious<CR>", "[<C-k>] Prev quickfix list hit", false, false)
+
+-- Just use  [l, ]l, [L, ]L, [CTRL-L, ]CTRL-L
+-- map("n", "<M-j>", ":lnext<CR>", "[<M-j>] Next location list hit", false, false)
+-- map("n", "<M-k>", ":lprevious<CR>", "[<M-k>] Prev location list hit", false, false)
