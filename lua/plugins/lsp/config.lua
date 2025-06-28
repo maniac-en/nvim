@@ -7,8 +7,9 @@ function M.setup()
   -- diagnostics/lsp config
   vim.diagnostic.config({
     virtual_text = true,
-    virtual_lines = { current_line = true },
-    underline = true,
+    -- virtual_lines = { current_line = true },
+    virtual_lines = false,
+    underline = false,
     severity_sort = true,
     update_in_insert = false,
     float = {

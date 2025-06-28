@@ -5,6 +5,12 @@ local M = {}
 function M.setup()
   local lspconfig = require("lspconfig")
   lspconfig.pyright.setup({
+    capabilities = {
+      general = {
+        -- positionEncodings = { "utf-8", "utf-16", "utf-32" }  <--- this is the default
+        positionEncodings = { "utf-16" }
+      },
+    },
     handlers = {
     },
     settings = {
@@ -26,7 +32,7 @@ function M.setup()
   })
   lspconfig.ruff.setup({
     on_attach = function(client, _)
-      if client.name == "ruff_lsp" then
+      if client.name == "ruff" then
         -- Disable hover in favor of Pyright
         client.server_capabilities.hoverProvider = false
       end
@@ -38,6 +44,12 @@ function M.setup()
         },
       },
     },
+    capabilities = {
+      general = {
+        -- positionEncodings = { "utf-8", "utf-16", "utf-32" }  <--- this is the default
+        positionEncodings = { "utf-16" }
+      },
+    }
   })
 end
 

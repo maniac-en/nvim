@@ -44,6 +44,7 @@ return {
       require("plugins.lsp.config")
       require("plugins.lsp.servers")
       require("plugins.lsp.autocmds")
+      require("plugins.lsp.keymaps")
     end
   }
 }

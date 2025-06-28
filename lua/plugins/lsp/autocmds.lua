@@ -22,19 +22,6 @@ function M.setup()
           end
         })
       end
-
-      -- mappings
-      vim.keymap.set(
-        "n",
-        "<leader>ds",
-        require("telescope.builtin").lsp_document_symbols,
-        {
-          buffer = true,
-          -- bufnr = args.buf,
-          desc = "MANIAC_LSP: [<leader>ds] Get [D]ocument [S]ymbols",
-          silent = true,
-        }
-      )
     end,
   })
 end

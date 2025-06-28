@@ -1,4 +1,6 @@
 vim.g.mapleader = "\\"
+---@diagnostic disable-next-line: duplicate-set-field
+vim.deprecate = function() end
 
 -- Bootstrap lazy.nvim
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
