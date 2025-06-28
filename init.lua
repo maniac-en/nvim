@@ -20,6 +20,7 @@ require("config.options")
 require("config.keymaps")
 require("config.autocmds")
 require("config.user_commands")
+require("config.abbreviations")
 
 -- Add lazy to the `runtimepath`, this allows us to `require` it.
 ---@diagnostic disable-next-line: undefined-field
