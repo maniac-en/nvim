@@ -1,4 +1,4 @@
--- lua/plugings/lsp/servers/init.lua
+-- lua/plugins/lsp/servers/init.lua
 
 local M = {}
 

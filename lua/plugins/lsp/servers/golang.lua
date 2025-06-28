@@ -40,18 +40,6 @@ function M.setup()
         semanticTokens = true,
       },
     },
-    -- settings = {
-    --   gopls = {
-    --     analyses = {
-    --       unusedparams = true,
-    --       shadow = true,
-    --     },
-    --     staticcheck = true,
-    --     usePlaceholders = true,
-    --     completeUnimported = true,
-    --     experimentalPostfixCompletions = true,
-    --   },
-    -- }
   })
 end
 
