@@ -34,6 +34,7 @@ return {
           "dockerfile",
           "go",
           "html",
+          "http",
           "javascript",
           "json",
           "lua",
@@ -90,6 +91,13 @@ return {
               ["ac"] = { query = "@class.outer", desc = "Select outer part of a class" },
               ["ic"] = { query = "@class.inner", desc = "Select inner part of a class" },
 
+              ["ab"] = { query = "@block.outer", desc = "Select outer part of a block" },
+              ["ib"] = { query = "@block.inner", desc = "Select inner part of a block" },
+
+              -- For HTTP files
+              ["ir"] = { query = "@request.inner", desc = "Select inner HTTP request" },
+              ["ar"] = { query = "@request.outer", desc = "Select HTTP request" },
+
               ["ad"] = { query = "@comment.outer", desc = "Select outer part of a comment" },
             },
           },
@@ -101,12 +109,14 @@ return {
               ["]c"] = "@class.outer",
               ["]p"] = "@parameter.inner",
               ["]b"] = "@block.outer",
+              ["]r"] = "@request.outer",
             },
             goto_previous_start = {
               ["[f"] = "@function.outer",
               ["[c"] = "@class.outer",
               ["[p"] = "@parameter.inner",
               ["[b"] = "@block.outer",
+              ["[r"] = "@request.outer",
             },
           },
           swap = {

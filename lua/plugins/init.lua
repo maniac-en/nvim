@@ -10,17 +10,21 @@ return {
   require("plugins.git"), -- Git integration (fugitive, gitsigns)
 
   -- File navigation and search
-  require("plugins.oil"),      -- File manager
+  require("plugins.oil"),       -- File manager
   require("plugins.telescope"), -- Fuzzy finder
 
   -- Language and syntax handling
   require("plugins.treeshitter"), -- Syntax highlighting (load before LSP)
-  require("plugins.lsp"),        -- Language server configurations (load before telescope)
-  require("plugins.completion"), -- Completion (nvim-cmp)
-  require("plugins.langtools"),  -- Language-specific tools and runners
+  require("plugins.lsp"),         -- Language server configurations (load before telescope)
+  require("plugins.completion"),  -- Completion (nvim-cmp)
+  require("plugins.langtools"),   -- Language-specific tools and runners
 
   -- Database tools
   require("plugins.squeel"),
+
+  -- Misc tools
+  require("plugins.showkeys"), -- show currently pressed keys on screen
+  require("plugins.rest"),
 
   -- Other plugins with no specific dependencies
   require("plugins.plugins_with_no_config"),

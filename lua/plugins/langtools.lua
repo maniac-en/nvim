@@ -74,6 +74,16 @@ local function setup_langtools()
   -- Python
   create_runner("python", "python3 %")
 
+  -- HTTP (For testing with rest.nvim)
+  vim.api.nvim_create_autocmd("FileType", {
+    pattern = "http",
+    callback = function()
+      vim.keymap.set("n", "<leader>r", ":Rest run<CR>", {
+        buffer = vim.api.nvim_get_current_buf(), desc = "MANIAC_http : run the http request under the server",
+      })
+    end
+  })
+
   -- Markdown settings
   vim.api.nvim_create_autocmd("FileType", {
     pattern = "markdown",
