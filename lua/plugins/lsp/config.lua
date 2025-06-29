@@ -4,10 +4,16 @@
 local M = {}
 
 function M.setup()
-  -- diagnostics/lsp config
+  -- diagnostics config
   vim.diagnostic.config({
-    virtual_text = true,
-    -- virtual_lines = { current_line = true },
+    virtual_text = {
+      format = function(diagnostic)
+        if diagnostic.severity == vim.diagnostic.severity.ERROR then
+          return string.format("E: %s", diagnostic.message)
+        end
+        return diagnostic.message
+      end,
+    },
     virtual_lines = false,
     underline = false,
     severity_sort = true,
@@ -15,25 +21,13 @@ function M.setup()
     float = {
       show_header = true,
       header = "",
-      prefix = "",
+      prefix = function(diagnostic)
+        return diagnostic.source .. "> "
+      end,
       scope = "line",
       source = "if_many",
       border = "rounded",
       focusable = true,
-    },
-    signs = {
-      text = {
-        [vim.diagnostic.severity.ERROR] = " ",
-        [vim.diagnostic.severity.WARN] = " ",
-        [vim.diagnostic.severity.INFO] = " ",
-        [vim.diagnostic.severity.HINT] = "󰌵 ",
-      },
-      numhl = {
-        [vim.diagnostic.severity.ERROR] = "",
-        [vim.diagnostic.severity.WARN] = "",
-        [vim.diagnostic.severity.HINT] = "",
-        [vim.diagnostic.severity.INFO] = "",
-      },
     },
   })
 
