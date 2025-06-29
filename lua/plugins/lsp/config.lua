@@ -6,12 +6,20 @@ local M = {}
 function M.setup()
   -- diagnostics config
   vim.diagnostic.config({
+    flags = {
+      debounce_text_changes = 150,
+    },
     virtual_text = {
       format = function(diagnostic)
-        if diagnostic.severity == vim.diagnostic.severity.ERROR then
-          return string.format("E: %s", diagnostic.message)
+        local message = diagnostic.message
+        -- Truncate long messages for performance
+        if #message > 60 then
+          return message:sub(1, 60) .. "..."
         end
-        return diagnostic.message
+        if diagnostic.severity == vim.diagnostic.severity.ERROR then
+          return "E: " .. message
+        end
+        return message
       end,
     },
     virtual_lines = false,
@@ -27,7 +35,6 @@ function M.setup()
       scope = "line",
       source = "if_many",
       border = "rounded",
-      focusable = true,
     },
   })
 
