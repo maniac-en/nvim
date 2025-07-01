@@ -89,6 +89,7 @@ return {
               return { "--hidden" }
             end,
           },
+          git_files = { show_untracked = true },
         },
         extensions = {
           fzf = {
