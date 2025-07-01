@@ -8,6 +8,7 @@ return {
       --  Easier downloads of LSP servers via mason registry
       {
         "mason-org/mason.nvim",
+        event = { 'BufEnter *.lua' },
         opts = {
           ui = {
             icons = {
