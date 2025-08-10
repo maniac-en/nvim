@@ -4,8 +4,8 @@
 -- Use shorthand variables for conciseness
 local opt = vim.opt
 local o = vim.o
-local wo = vim.wo
-local g = vim.g
+-- local wo = vim.wo
+-- local g = vim.g
 local fn = vim.fn
 local api = vim.api
 local HOME = fn.expand("$HOME")
@@ -15,7 +15,7 @@ local HOME = fn.expand("$HOME")
 ------------------
 
 -- Line numbers
-opt.number = false
+opt.number = true
 opt.relativenumber = true
 opt.ruler = false -- Disable cursor position (using winbar instead)
 
