@@ -22,6 +22,11 @@ function M.setup()
         bufnr)
 
       map("n", "gd", tele_builtin.lsp_definitions, "[gd] [G]et [D]efinition via telescope", bufnr)
+      map("n", "<leader>gd", function()
+        tele_builtin.lsp_definitions({
+          jump_type = "vsplit"
+        })
+      end, "[<leader>gd] Definition in vertical split", bufnr)
       map("n", "gD", vim.lsp.buf.declaration, "[gD] [G]et [D]eclaration", bufnr)
       map("n", "gi", tele_builtin.lsp_implementations, "[gi] [G]et [I]mplementation", bufnr)
       map("n", "<leader>sd", tele_builtin.diagnostics, "[<leader>sd] Show [D]iagnostics via telescope", bufnr)
