@@ -7,31 +7,6 @@ return {
     { "-", "<CMD>Oil<CR>", desc = "Open parent directory in Oil" },
   },
   opts = function()
-    -- Create a cached table for git-ignored files
-    local git_ignored = setmetatable({}, {
-      __index = function(self, key)
-        local proc = vim.system(
-          { "git", "ls-files", "--ignored", "--exclude-standard", "--others", "--directory" },
-          {
-            cwd = key,
-            text = true,
-          }
-        )
-        local result = proc:wait()
-        local ret = {}
-        if result.code == 0 then
-          for line in vim.gsplit(result.stdout, "\n", { plain = true, trimempty = true }) do
-            -- Remove trailing slash
-            line = line:gsub("/$", "")
-            table.insert(ret, line)
-          end
-        end
-
-        rawset(self, key, ret)
-        return ret
-      end,
-    })
-
     -- Create a module-scoped variable for detail view toggle
     local detail_view_enabled = false
 
@@ -43,19 +18,26 @@ return {
       -- Buffer display and behavior
       view_options = {
         -- Show hidden files (respects .gitignore)
-        show_hidden = true,
-        is_hidden_file = function(name, _)
-          -- dotfiles are always considered hidden
+        show_hidden = false,
+        is_hidden_file = function(name, entry)
+          local dir = require("oil").get_current_dir()
+          if not dir then return false end
+
+          -- Always hide dotfiles
           if vim.startswith(name, ".") then
             return true
           end
-          local dir = require("oil").get_current_dir()
-          -- if no local directory (e.g. for ssh connections), always show
-          if not dir then
-            return false
-          end
-          -- Check if file is gitignored
-          return vim.list_contains(git_ignored[dir], name)
+
+          -- Fallback to name if entry is not a table
+          local rel_path = type(entry) == "table" and entry.name or name
+
+          -- Check via git check-ignore
+          local result = vim.system({ "git", "check-ignore", rel_path }, {
+            cwd = dir,
+            text = true,
+          }):wait()
+
+          return result.code == 0
         end,
         -- Natural sort order (10.txt comes after 2.txt)
         sort = {
