@@ -45,11 +45,7 @@ return {
       vim.g.undotree_SetFocusWhenToggle = 1 -- Focus undotree when opening
       vim.g.undotree_ShortIndicators = 1 -- Use short indicators
       vim.g.undotree_HelpLine = 0        -- Hide help line for more space
-
-      -- Increase the saved undo history for better undotree usage
-      vim.opt.undofile = true                             -- Save undo history to file
-      vim.opt.undodir = vim.fn.stdpath("data") .. "/undodir" -- Dir for undo files
-      vim.opt.undolevels = 10000                          -- Maximum number of changes that can be undone
+      -- undofile/undodir/undolevels are set in lua/config/options.lua
     end,
   },
 

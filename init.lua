@@ -1,6 +1,4 @@
 vim.g.mapleader = " "
----@diagnostic disable-next-line: duplicate-set-field
-vim.deprecate = function() end
 
 -- Bootstrap lazy.nvim
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
@@ -24,16 +22,26 @@ require("config.keymaps")
 require("config.autocmds")
 require("config.user_commands")
 require("config.abbreviations")
+require("config.langtools")
 
 -- Add lazy to the `runtimepath`, this allows us to `require` it.
----@diagnostic disable-next-line: undefined-field
 vim.opt.rtp:prepend(lazypath)
 
--- Setup plugin manager
+-- Setup plugin manager; imports every lua/plugins/*.lua (and lua/plugins/*/init.lua)
 require("lazy").setup("plugins", {
-  -- Lazy options here
   change_detection = {
     notify = false,
+  },
+  performance = {
+    rtp = {
+      disabled_plugins = {
+        "gzip",
+        "netrwPlugin", -- oil.nvim is the file explorer
+        "tarPlugin",
+        "tutor",
+        "zipPlugin",
+      },
+    },
   },
 })
 

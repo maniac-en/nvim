@@ -33,10 +33,10 @@ opt.mouse = "a" -- Enable mouse mode
 -- opt.clipboard = "unnamedplus"  -- Uncomment to sync clipboard with system
 
 -- File handling
-opt.directory = HOME .. "/.cache/nvim"    -- Swap file directory
-opt.undofile = true                       -- Save undo history
-opt.undodir = HOME .. "/.cache/nvim/undo" -- Undo file directory
-opt.encoding = "utf-8"                    -- File encoding
+opt.directory = HOME .. "/.cache/nvim"              -- Swap file directory
+opt.undofile = true                                 -- Save undo history
+opt.undodir = fn.stdpath("data") .. "/undodir"      -- Undo file directory (existing history lives here)
+opt.undolevels = 10000                              -- Maximum number of changes that can be undone
 -- opt.fileencodings = "utf-8,iso-2022-jp,sjis,euc-jp" -- Fallback file encodings
 
 ----------------
@@ -61,6 +61,7 @@ opt.signcolumn = "yes"                   -- Always show sign column
 opt.termguicolors = true                 -- True color support
 opt.display = "lastline,uhex"            -- Show as much as possible of last line
 opt.listchars = "tab:»·,space:.,trail:·" -- Show special characters
+opt.winborder = "rounded"                -- Default border for floating windows (hover, signature, etc.)
 
 -- Scrolling and motion
 opt.scrolloff = 8      -- Keep 8 lines above/below cursor
@@ -69,20 +70,14 @@ opt.sidescrolloff = 8  -- Keep 8 columns left/right of cursor
 opt.startofline = true -- Move cursor to 1st non-blank while navigation
 
 -- Colors and highlighting
-api.nvim_set_var("t_co", 256)          -- Terminal colors support
-api.nvim_set_var("background", "dark") -- Dark background
-api.nvim_set_var("syntax", "on")       -- Enable syntax highlighting
-
--- Create highlight groups for winbar components
+-- Make winbar more visible; runs whenever a colorscheme is (re)applied
 api.nvim_create_autocmd("ColorScheme", {
   callback = function()
-    -- Make winbar more visible
     local normal_bg = api.nvim_get_hl(0, { name = "Normal" }).bg or 0
     local normal_fg = api.nvim_get_hl(0, { name = "Normal" }).fg or 0xFFFFFF
     api.nvim_set_hl(0, "WinBar", { fg = normal_fg, bg = normal_bg, bold = true })
   end,
 })
-vim.cmd("doautocmd ColorScheme") -- Apply the highlights on startup
 
 ------------------
 -- Text Handling --
@@ -102,13 +97,12 @@ opt.spell = true                                           -- Enable spellcheck
 opt.spellcapcheck = ""                                     -- Disable first word capitalization spellchecks
 
 -- Folding
-opt.foldmethod = "manual"                        -- Manual folding
-opt.foldexpr = "v:lua.vim.treesitter.foldexpr()" -- Use treesitter for folds
-opt.foldcolumn = "0"                             -- Don't show fold column
-opt.foldtext = ""                                -- No custom fold text
-opt.foldlevel = 99                               -- Start unfolded by default
-opt.foldlevelstart = 1                           -- Start with some folds
-opt.foldnestmax = 4                              -- Maximum nesting of folds
+opt.foldmethod = "manual" -- Manual folding
+opt.foldcolumn = "0"      -- Don't show fold column
+opt.foldtext = ""         -- No custom fold text
+opt.foldlevel = 99        -- Start unfolded by default
+opt.foldlevelstart = 1    -- Start with some folds
+opt.foldnestmax = 4       -- Maximum nesting of folds
 
 ------------------
 -- Performance --
@@ -124,6 +118,3 @@ opt.completeopt = "menuone,noselect" -- Better completion experience
 
 -- Preview
 opt.inccommand = "split" -- Show preview for substitutions
-
--- Script encoding
-api.nvim_set_var("scriptencoding", "utf-8")

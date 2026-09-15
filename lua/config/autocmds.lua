@@ -8,18 +8,23 @@ autocmd("TextYankPost", {
   group = maniac_aug,
   pattern = "*",
   callback = function()
-    vim.highlight.on_yank({
+    vim.hl.on_yank({
       higroup = "IncSearch",
       timeout = 40,
     })
   end,
 })
 
--- clear out trailing spaces on buffer write
-autocmd("BufWrite", {
+-- clear out trailing spaces on buffer write (without moving the cursor or
+-- clobbering the last search pattern)
+autocmd("BufWritePre", {
   group = maniac_aug,
   pattern = "*",
-  command = [[%s/\s\+$//e]],
+  callback = function()
+    local view = vim.fn.winsaveview()
+    vim.cmd([[keeppatterns %s/\s\+$//e]])
+    vim.fn.winrestview(view)
+  end,
 })
 
 -- disable line numbers in terminal
@@ -47,7 +52,7 @@ autocmd("FileType", {
 -- Preferred format options for coding
 autocmd("FileType", {
   group = maniac_aug,
-  pattern = { "sh", "go", "lua", "python", "javascript" },
+  pattern = { "sh", "go", "lua", "python" },
   callback = function()
     vim.opt_local.formatoptions = "jcroql"
   end,
@@ -56,6 +61,7 @@ autocmd("FileType", {
 -- Organize go imports automatically on save
 -- Ref: https://cs.opensource.google/go/x/tools/+/refs/tags/v0.18.0:gopls/doc/vim.md#neovim-imports
 autocmd("BufWritePre", {
+  group = maniac_aug,
   pattern = "*.go",
   callback = function()
     local params = vim.lsp.util.make_range_params(0, "utf-16")
@@ -79,17 +85,16 @@ autocmd("BufWritePre", {
   end
 })
 
+-- In toggleterm buffers, turn write commands (:w, :wq, ...) into a quit
 -- https://github.com/akinsho/toggleterm.nvim/issues/155
-vim.api.nvim_create_autocmd({ "TermEnter" }, {
-  callback = function()
-    for _, buffers in ipairs(vim.fn.getbufinfo()) do
-      local filetype = vim.api.nvim_buf_get_option(buffers.bufnr, "filetype")
-      if filetype == "toggleterm" then
-        vim.api.nvim_create_autocmd({ "BufWriteCmd", "FileWriteCmd", "FileAppendCmd" }, {
-          buffer = buffers.bufnr,
-          command = "q!",
-        })
-      end
-    end
+autocmd("FileType", {
+  group = maniac_aug,
+  pattern = "toggleterm",
+  callback = function(args)
+    autocmd({ "BufWriteCmd", "FileWriteCmd", "FileAppendCmd" }, {
+      group = maniac_aug,
+      buffer = args.buf,
+      command = "q!",
+    })
   end,
 })
