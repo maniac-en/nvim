@@ -28,9 +28,6 @@ local function write(path, lines)
   vim.fn.writefile(lines, full)
   return full
 end
-local function git_init(dir)
-  vim.system({ "git", "init", "-q", root .. "/" .. dir }):wait()
-end
 
 local function open(path)
   vim.cmd("edit " .. vim.fn.fnameescape(root .. "/" .. path))
@@ -70,6 +67,15 @@ end
 
 local startup_messages = vim.trim(vim.fn.execute("messages"))
 
+-- One git repo for all sample files, used as the working directory like a real
+-- project (workspace-diagnostics lists files via `git ls-files` from the cwd,
+-- once per session, at the first LSP attach)
+vim.fn.mkdir(root, "p")
+vim.system({ "git", "init", "-q", root }):wait()
+write("py/scripts/other.py", { "x = 1" })
+vim.system({ "git", "add", "-A" }, { cwd = root }):wait()
+vim.cmd.cd(vim.fn.fnameescape(root))
+
 ----------------------------------------------------------------------------
 section("startup", function()
   check("startup: no messages/errors in this session", startup_messages == "", startup_messages)
@@ -95,7 +101,6 @@ end)
 section("go", function()
   vim.fn.mkdir(root .. "/go", "p")
   vim.system({ "go", "mod", "init", "example.com/smoke" }, { cwd = root .. "/go" }):wait()
-  git_init("go")
   write("go/main.go", {
     "package main",
     "",
@@ -137,7 +142,6 @@ end)
 
 ----------------------------------------------------------------------------
 section("python", function()
-  git_init("py")
   write("py/t.py", {
     "import sys",
     "import os",
@@ -180,9 +184,8 @@ section("python", function()
     check("python: buffer keymap " .. lhs, has_buf_map(buf, "n", lhs))
   end
 
-  -- Opening a second project file must not warn about a redundant didOpen
-  -- (workspace-diagnostics pre-opens project files)
-  write("py/scripts/other.py", { "x = 1" })
+  -- Opening another git-tracked project file must not warn about a redundant
+  -- didOpen (workspace-diagnostics pre-opens tracked files)
   local before = vim.fn.execute("messages")
   local other = open("py/scripts/other.py")
   wait_client(other, "basedpyright")
@@ -194,7 +197,6 @@ end)
 
 ----------------------------------------------------------------------------
 section("other languages", function()
-  git_init("misc")
   -- format: true = must change on save, false = must stay untouched, nil = not checked
   local cases = {
     { file = "t.c",    server = "clangd", content = { "int main(){return 0;}" } },
@@ -260,6 +262,7 @@ end)
 
 ----------------------------------------------------------------------------
 vim.lsp.buf.format = real_format
+vim.cmd.cd("/")
 vim.fn.delete(root, "rf")
 
 local failed = 0
