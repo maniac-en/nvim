@@ -1,14 +1,38 @@
 -- lua/plugins/lsp/init.lua
+-- Servers use Neovim's built-in vim.lsp.config/vim.lsp.enable. nvim-lspconfig
+-- only provides the base server configs (its lsp/*.lua files); per-server
+-- overrides live in after/lsp/<server>.lua.
+
+local servers = {
+  -- Go
+  "gopls",
+  -- Python
+  "basedpyright",
+  "ruff",
+  -- Lua
+  "lua_ls",
+  -- Shell
+  "bashls",
+  -- C/C++
+  "clangd",
+  -- JSON
+  "jsonls",
+  -- Web
+  "html",
+  "cssls",
+  "tailwindcss",
+  "ts_ls",
+}
+
 return {
   {
     "neovim/nvim-lspconfig",
-    event = { 'BufReadPre', 'BufNewFile' },
-    pin = true,
+    event = { "BufReadPre", "BufNewFile" },
     dependencies = {
       --  Easier downloads of LSP servers via mason registry
       {
         "mason-org/mason.nvim",
-        event = { 'BufEnter *.lua' },
+        cmd = { "Mason", "MasonInstall", "MasonUninstall", "MasonUpdate", "MasonLog" },
         opts = {
           ui = {
             icons = {
@@ -37,17 +61,16 @@ return {
       "artemave/workspace-diagnostics.nvim",
     },
     config = function()
-      local lspconfig_defaults = require("lspconfig").util.default_config
-      lspconfig_defaults.capabilities = vim.tbl_deep_extend(
-        'force',
-        lspconfig_defaults.capabilities,
-        require("cmp_nvim_lsp").default_capabilities()
-      )
+      -- Applies to every server
+      vim.lsp.config("*", {
+        capabilities = require("cmp_nvim_lsp").default_capabilities(),
+      })
 
       require("plugins.lsp.config")
-      require("plugins.lsp.servers")
       require("plugins.lsp.autocmds")
       require("plugins.lsp.keymaps")
+
+      vim.lsp.enable(servers)
     end
   }
 }
