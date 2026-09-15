@@ -43,8 +43,12 @@ vim.api.nvim_create_autocmd("LspAttach", {
     -- Disable semantic highlights: A language server can apply new highlights to your code, this is known as semantic tokens.
     client.server_capabilities.semanticTokensProvider = nil
 
-    -- Enable workspace diagnostics
-    require("workspace-diagnostics").populate_workspace_diagnostics(client, bufnr)
+    -- Enable workspace diagnostics. Skipped for basedpyright: its diagnostics are
+    -- silenced anyway, and pre-opening files makes it warn "Received redundant
+    -- open text document command" when you later open one of them.
+    if client.name ~= "basedpyright" then
+      require("workspace-diagnostics").populate_workspace_diagnostics(client, bufnr)
+    end
 
     -- Format on save: one autocmd per buffer, however many clients attach.
     -- Capabilities are checked at save time because some servers (e.g. ruff)

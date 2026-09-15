@@ -179,6 +179,17 @@ section("python", function()
   for _, lhs in ipairs({ "<leader>r", "gd", "K" }) do
     check("python: buffer keymap " .. lhs, has_buf_map(buf, "n", lhs))
   end
+
+  -- Opening a second project file must not warn about a redundant didOpen
+  -- (workspace-diagnostics pre-opens project files)
+  write("py/scripts/other.py", { "x = 1" })
+  local before = vim.fn.execute("messages")
+  local other = open("py/scripts/other.py")
+  wait_client(other, "basedpyright")
+  vim.wait(3000)
+  local new_msgs = vim.fn.execute("messages"):sub(#before + 1)
+  check("python: no 'redundant open text document' warning",
+    not new_msgs:find("redundant open text document", 1, true), new_msgs)
 end)
 
 ----------------------------------------------------------------------------
