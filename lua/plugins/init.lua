@@ -24,6 +24,7 @@ return {
 
   -- Misc tools
   require("plugins.showkeys"), -- show currently pressed keys on screen
+  require("plugins.zenmode"),
   require("plugins.rest"),
 
   -- Other plugins with no specific dependencies

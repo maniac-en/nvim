@@ -7,6 +7,10 @@ return {
     config = function()
       local colors = require("catppuccin.palettes").get_palette("macchiato")
       require("catppuccin").setup({
+        -- transparent_background = true,
+        -- float = {
+        --   transparent = true,
+        -- },
         flavour = "macchiato",
         styles = {
           strings = { "italic" },
@@ -27,7 +31,7 @@ return {
           gitsigns = {
             enabled = true,
             -- Set to true if you're using transparent background
-            transparent = false,
+            transparent = true,
           },
           telescope = {
             enabled = true,
