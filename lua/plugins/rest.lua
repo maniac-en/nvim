@@ -1,8 +1,6 @@
 return {
   {
     "rest-nvim/rest.nvim",
-    dependencies = {
-      "nvim-treesitter/nvim-treesitter",
-    }
+    -- ships its own http parser (luarocks: tree-sitter-http)
   }
 }

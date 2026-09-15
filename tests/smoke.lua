@@ -9,8 +9,9 @@
 
 -- Don't leave undo files for the throwaway sample files
 vim.o.undofile = false
--- Keep "-- INSERT --" and similar mode text out of the output
+-- Keep "-- INSERT --", "N lines yanked" and similar text out of the output
 vim.o.showmode = false
+vim.o.report = 9999
 
 -- Results are printed as each check runs; a summary follows at the end
 local function print_line(line)
@@ -352,6 +353,101 @@ section("completion", function()
 end)
 
 ----------------------------------------------------------------------------
+section("treesitter", function()
+  check("treesitter: nvim-treesitter is on the main branch",
+    type(require("nvim-treesitter").install) == "function" and not pcall(require, "nvim-treesitter.configs"))
+  check("treesitter: exactly one go parser on runtimepath (no stale parsers)",
+    #vim.api.nvim_get_runtime_file("parser/go.so", true) == 1,
+    vim.inspect(vim.api.nvim_get_runtime_file("parser/go.so", true)))
+
+  write("go/ts.go", {
+    "package main",
+    "",
+    'import "fmt"',
+    "",
+    "func helper(a int, b string) {",
+    "\tif a > 0 {",
+    "\t\tfmt.Println(b)",
+    "\t}",
+    "}",
+    "",
+    "func caller() {",
+    '\thelper(1, "x")',
+    "}",
+  })
+  local buf = open("go/ts.go")
+  check("treesitter: highlighting active in Go", vim.treesitter.highlighter.active[buf] ~= nil)
+  check("treesitter: indentexpr set in Go", vim.bo[buf].indentexpr:find("nvim%-treesitter") ~= nil, vim.bo[buf].indentexpr)
+
+  local function run(k) vim.api.nvim_feedkeys(vim.keycode(k), "mx", false) end
+  local function yank_after(k, row, col)
+    vim.api.nvim_win_set_cursor(0, { row, col })
+    run(k .. "y")
+    return vim.fn.getreg('"')
+  end
+  local got = yank_after("vam", 7, 3)
+  check("textobjects: vam selects the function", got:match("^func helper") and got:match("}$"), got)
+  got = yank_after("via", 12, 8)
+  check("textobjects: via selects an argument", got == "1", got)
+  vim.api.nvim_win_set_cursor(0, { 1, 0 })
+  run("]f")
+  local after_move = vim.api.nvim_win_get_cursor(0)[1]
+  run(";")
+  check("textobjects: ]f moves to next function, ; repeats",
+    after_move == 5 and vim.api.nvim_win_get_cursor(0)[1] == 11, vim.inspect(vim.api.nvim_win_get_cursor(0)))
+  vim.api.nvim_win_set_cursor(0, { 12, 8 })
+  run("<leader>sa")
+  check("textobjects: <leader>sa swaps arguments", vim.api.nvim_buf_get_lines(buf, 11, 12, false)[1] == '\thelper("x", 1)',
+    vim.api.nvim_buf_get_lines(buf, 11, 12, false)[1])
+  vim.cmd("silent undo")
+
+  -- <C-space> selects the node under the cursor, grows to parents, <C-backspace> shrinks back
+  got = yank_after("<C-space>", 7, 14)
+  local grown = yank_after("<C-space><C-space><C-space>", 7, 14)
+  local shrunk = yank_after("<C-space><C-space><C-space><C-backspace><C-backspace>", 7, 14)
+  check("selection: <C-space> starts at node, grows, <C-backspace> shrinks back",
+    got == "b" and grown:find("fmt.Println(b)", 1, true) and shrunk == "b",
+    vim.inspect({ start = got, grown = grown, shrunk = shrunk }))
+
+  vim.api.nvim_win_set_cursor(0, { 12, 1 })
+  run("gcc")
+  check("comment: gcc comments the line", vim.api.nvim_buf_get_lines(buf, 11, 12, false)[1] == '\t// helper(1, "x")',
+    vim.api.nvim_buf_get_lines(buf, 11, 12, false)[1])
+  vim.cmd("silent undo")
+
+  -- K hover with a code block: its markdown injections must parse (the old
+  -- master branch crashed here and turned highlighting off)
+  wait_client(buf, "gopls")
+  await(function() return false end, 1500)
+  vim.api.nvim_win_set_cursor(0, { 7, 7 }) -- on Println
+  vim.lsp.buf.hover()
+  local float
+  await(function()
+    for _, w in ipairs(vim.api.nvim_list_wins()) do
+      if vim.api.nvim_win_get_config(w).relative ~= "" and vim.bo[vim.api.nvim_win_get_buf(w)].filetype == "markdown" then
+        float = w
+        return true
+      end
+    end
+  end, 10000)
+  check("hover: K opens a markdown popup", float ~= nil)
+  if float then
+    local fbuf = vim.api.nvim_win_get_buf(float)
+    local ok, err = pcall(function() vim.treesitter.get_parser(fbuf):parse(true) end)
+    local langs = {}
+    if ok then vim.treesitter.get_parser(fbuf):for_each_tree(function(_, t) langs[t:lang()] = true end) end
+    check("hover: code blocks in the popup parse without errors", ok and langs.go, err or vim.inspect(langs))
+    vim.api.nvim_win_close(float, true)
+  end
+
+  -- http requests as textobjects (queries/http/textobjects.scm)
+  write("misc/t.http", { "GET https://example.com", "", "###", "", "POST https://example.com/x", "" })
+  open("misc/t.http")
+  got = yank_after("var", 5, 0)
+  check("textobjects: var selects an HTTP request (custom query)", got:find("^POST https://example.com/x") ~= nil, got)
+end)
+
+----------------------------------------------------------------------------
 section("editor", function()
   for _, cmd in ipairs({ "RunGo", "RunPython", "RunC", "RunJavascript", "RunTypescript", "RunLua" }) do
     check("command :" .. cmd, vim.fn.exists(":" .. cmd) == 2)
@@ -373,11 +469,35 @@ section("editor", function()
 end)
 
 ----------------------------------------------------------------------------
+-- Deprecation warnings from third-party plugins we've decided to live with for
+-- now; each one must have an entry in parked-for-later.md. Matched against the
+-- warning's stack trace. Anything else fails the health check.
+local known_deprecations = {
+  { stack = "/rest.nvim/", note = "rest.nvim vim.validate{} (parked: fork rest.nvim)" },
+}
+
 section("health", function()
   vim.cmd("silent checkhealth vim.deprecated")
   local report = text(0)
-  check("health: no deprecated functions", report:find("No deprecated functions detected", 1, true) ~= nil, report)
   vim.cmd("bwipeout!")
+  if report:find("No deprecated functions detected", 1, true) then
+    check("health: no deprecated functions", true)
+  else
+    -- one chunk per warning, each followed by its stack trace
+    local unknown = {}
+    for warning in (report .. "\n- "):gmatch("WARNING(.-)\n%- ") do
+      local known
+      for _, k in ipairs(known_deprecations) do
+        if warning:find(k.stack, 1, true) then known = k end
+      end
+      if known then
+        check("health: known deprecation tolerated: " .. known.note, true)
+      else
+        unknown[#unknown + 1] = "WARNING" .. warning
+      end
+    end
+    check("health: no unexpected deprecated functions", #unknown == 0, table.concat(unknown, "\n"))
+  end
 
   local msgs = vim.trim(vim.fn.execute("messages"))
   check("messages: empty after all checks", msgs == "", msgs)
