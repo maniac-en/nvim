@@ -31,3 +31,18 @@ Things deliberately postponed. Pick one up when it becomes a real need.
   with `ANTHROPIC_API_KEY`, or the `claude` CLI), keeping the same contract:
   takes the commit file path, writes the message into it, exits non-zero on
   failure. `:AiCommit` itself shouldn't need changes.
+
+## Revisit plugins that Neovim 0.12 partly covers (after a few weeks of use)
+Kept during the 0.12 refresh because they have extras you may rely on without
+remembering. If you never reach for the extras, swap to the built-in and drop
+the plugin.
+- **undotree** (`<leader>u`): built-in `:Undotree` (`packadd nvim.undotree`)
+  covers browsing undo history; you'd lose the diff panel
+  (`undotree_DiffAutoOpen`).
+- **vim-unimpaired**: 0.11+ built-ins cover `[q ]q [b ]b [l ]l [a ]a [t ]t
+  [<Space> ]<Space>`; you'd lose `yo*` option toggles, `[e ]e` line exchange,
+  `[x ]x` encoding.
+- **workspace-diagnostics.nvim**: pre-opens git-tracked files so servers report
+  project-wide diagnostics (skipped for basedpyright). Built-in alternative:
+  `:lua vim.lsp.buf.workspace_diagnostics()` on demand, where the server
+  supports it.
