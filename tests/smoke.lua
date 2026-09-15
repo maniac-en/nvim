@@ -321,6 +321,34 @@ section("completion", function()
   await(function() return vim.fn.mode() == "n" end)
   io.stdout:write("\n") -- headless Neovim echoes the typed command line to stdout
   check("completion: cmdline menu shows while typing", cmd_menu)
+
+  -- Whole-line completion: <C-x><C-m> (current buffer), <C-x><C-w> (workspace via rg)
+  write("misc/lines_other.txt", { "unopened = smoke_marker_42 * 2" })
+  write("misc/lines.txt", { "in buffer: smoke_marker_42 here", "" })
+  local lbuf = open("misc/lines.txt")
+  vim.api.nvim_win_set_cursor(0, { 2, 0 })
+  local function pum_words()
+    return vim.tbl_map(function(i) return i.word end, vim.fn.complete_info({ "items" }).items or {})
+  end
+  keys("A")
+  await(function() return vim.fn.mode() == "i" end)
+  keys("smoke_marker_42")
+  await(function() return vim.api.nvim_get_current_line() == "smoke_marker_42" end)
+  keys("<C-x><C-m>")
+  await(function() return vim.fn.pumvisible() == 1 end)
+  local words = pum_words()
+  check("line completion: <C-x><C-m> offers matching buffer lines only",
+    vim.deep_equal(words, { "in buffer: smoke_marker_42 here" }), vim.inspect(words))
+  keys("<C-e>")
+  await(function() return vim.fn.pumvisible() == 0 end)
+  keys("<C-x><C-w>")
+  await(function() return vim.fn.pumvisible() == 1 end)
+  words = pum_words()
+  check("line completion: <C-x><C-w> includes lines from unopened files",
+    vim.tbl_contains(words, "unopened = smoke_marker_42 * 2"), vim.inspect(words))
+  keys("<C-e><Esc>")
+  await(function() return vim.fn.mode() == "n" end)
+  vim.api.nvim_buf_delete(lbuf, { force = true })
 end)
 
 ----------------------------------------------------------------------------

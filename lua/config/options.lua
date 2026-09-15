@@ -115,6 +115,7 @@ opt.report = 0       -- Always report changed lines
 
 -- Autocomplete
 opt.completeopt = "menuone,noselect" -- Better completion experience
+opt.shortmess:append("c")           -- No "match 1 of 2" style ins-completion messages
 
 -- Preview
 opt.inccommand = "split" -- Show preview for substitutions

@@ -23,6 +23,7 @@ require("config.autocmds")
 require("config.user_commands")
 require("config.abbreviations")
 require("config.langtools")
+require("config.line_completion")
 
 -- Add lazy to the `runtimepath`, this allows us to `require` it.
 vim.opt.rtp:prepend(lazypath)
