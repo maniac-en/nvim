@@ -55,15 +55,14 @@ return {
       },
       -- LSP progress indicator
       { "j-hui/fidget.nvim", opts = {}, },
-      -- nvim-cmp source for neovim's builtin LSP client
-      "hrsh7th/cmp-nvim-lsp",
       -- get workspace diagnostics
       "artemave/workspace-diagnostics.nvim",
     },
     config = function()
       -- Applies to every server
       vim.lsp.config("*", {
-        capabilities = require("cmp_nvim_lsp").default_capabilities(),
+        -- completion capabilities from blink.cmp (snippets, resolve, labelDetails, ...)
+        capabilities = require("blink.cmp").get_lsp_capabilities(),
       })
 
       require("plugins.lsp.config")

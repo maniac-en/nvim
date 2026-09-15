@@ -1,217 +1,117 @@
 -- lua/plugins/completion.lua
+-- Docs: :h blink-cmp  (https://cmp.saghen.dev)
+
+-- Menu marker for where an item came from (same markers the old nvim-cmp setup used)
+local source_icons = {
+  lsp = "λ",
+  path = "🖫",
+  buffer = "Ω",
+  lazydev = "Π",
+  dadbod = "🛢",
+  cmdline = ":",
+}
+
+-- Is the character before the cursor inside a treesitter comment node?
+-- (the node *at* an insert-mode cursor at end of line is the enclosing block)
+local function in_comment()
+  local ok, result = pcall(function()
+    local row, col = unpack(vim.api.nvim_win_get_cursor(0))
+    local parser = vim.treesitter.get_parser(0, nil, { error = false })
+    if not parser then return false end
+    parser:parse({ row - 1, row }) -- make sure the tree reflects what was just typed
+    local node = vim.treesitter.get_node({ pos = { row - 1, math.max(col - 1, 0) } })
+    return node ~= nil and node:type():find("comment") ~= nil
+  end)
+  return ok and result
+end
+
 return {
-  -- Core completion plugins
   {
-    "hrsh7th/nvim-cmp",
+    "saghen/blink.cmp",
+    -- release tags ship a prebuilt Rust fuzzy matcher
+    version = "1.*",
     event = { "InsertEnter", "CmdlineEnter" },
-    dependencies = {
-      "hrsh7th/cmp-buffer",
-      -- "hrsh7th/cmp-path", -- using async-path instead
-      "https://codeberg.org/FelipeLema/cmp-async-path",
-      "hrsh7th/cmp-cmdline",
-      "hrsh7th/cmp-nvim-lua",
-      "hrsh7th/cmp-nvim-lsp-signature-help",
-      "onsails/lspkind.nvim",
-      "tjdevries/plenary.nvim",
-      "tjdevries/complextras.nvim",
-      {
-        "roobert/tailwindcss-colorizer-cmp.nvim",
-        config = true,
+
+    ---@module 'blink.cmp'
+    ---@type blink.cmp.Config
+    opts = {
+      enabled = function()
+        -- no completion while recording/replaying macros or inside comments
+        -- (default conditions for prompt buffers and vim.b.completion = false still apply)
+        if vim.fn.reg_recording() ~= "" or vim.fn.reg_executing() ~= "" then return false end
+        return not in_comment()
+      end,
+
+      keymap = {
+        preset = "none",
+        ["<C-space>"] = { "show", "show_documentation", "hide_documentation" },
+        ["<C-e>"] = { "hide", "fallback" },
+        ["<C-y>"] = { "select_and_accept", "fallback" },
+
+        ["<C-n>"] = { "select_next", "fallback_to_mappings" },
+        ["<C-p>"] = { "select_prev", "fallback_to_mappings" },
+        ["<Down>"] = { "select_next", "fallback" },
+        ["<Up>"] = { "select_prev", "fallback" },
+
+        ["<M-p>"] = { "scroll_documentation_up", "fallback" },
+        ["<M-n>"] = { "scroll_documentation_down", "fallback" },
+        -- snippet placeholders: <Tab>/<S-Tab> are Neovim's built-in vim.snippet jumps
       },
-    },
-    enabled = function()
-      local disabled = false
-      disabled = disabled or (vim.api.nvim_get_option_value('buftype', { buf = 0 }) == 'prompt')
-      disabled = disabled or (vim.fn.reg_recording() ~= '')
-      disabled = disabled or (vim.fn.reg_executing() ~= '')
-      disabled = disabled or require('cmp.config.context').in_treesitter_capture('comment')
-      return not disabled
-    end,
-    opts = function(_, opts)
-      opts.sources = opts.sources or {}
-      table.insert(opts.sources, {
-        name = "lazydev",
-        group_index = 0, -- set group index to 0 to skip loading LuaLS completions
-      })
-    end,
-    config = function()
-      local cmp = require("cmp")
-      local lspkind = require("lspkind")
 
-      -- Setup Tailwind colorizer
-      require("tailwindcss-colorizer-cmp").setup({
-        color_square_width = 2,
-      })
-
-      -- Helper function for Tab completion
-      local has_words_before = function()
-        unpack = unpack or table.unpack
-        local line, col = unpack(vim.api.nvim_win_get_cursor(0))
-        return col ~= 0
-            and vim.api.nvim_buf_get_lines(0, line - 1, line, true)[1]:sub(col, col):match("%s") == nil
-      end
-
-      -- Set completeopt
-      vim.opt.completeopt = { "menu", "menuone", "noselect" }
-      vim.opt.shortmess:append("c")
-
-      cmp.setup({
-
-        sources = {
-          { name = "nvim_lua" },
-          { name = "nvim_lsp" },
-          { name = "async_path" },
-          {
-            name = "buffer",
-            option = {
-              get_bufnrs = function()
-                -- Complete from visible buffers
-                local bufs = {}
-                for _, win in ipairs(vim.api.nvim_list_wins()) do
-                  bufs[vim.api.nvim_win_get_buf(win)] = true
-                end
-                return vim.tbl_keys(bufs)
-              end,
-              keyword_length = 3,
+      completion = {
+        documentation = { auto_show = true, auto_show_delay_ms = 200 },
+        menu = {
+          draw = {
+            columns = { { "source_icon" }, { "label", "label_description", gap = 1 }, { "kind_icon", "kind" } },
+            components = {
+              source_icon = {
+                ellipsis = false,
+                text = function(ctx) return source_icons[ctx.source_id] or ctx.source_id end,
+                highlight = "BlinkCmpSource",
+              },
             },
           },
-          { name = "nvim_lsp_signature_help" },
         },
+      },
 
-        window = {
-          completion = cmp.config.window.bordered({
-            winhighlight = "Normal:CmpNormal",
-          }),
-          documentation = cmp.config.window.bordered({
-            winhighlight = "Normal:CmpDocNormal",
-          }),
+      -- signature help while typing function arguments
+      signature = { enabled = true },
+
+      sources = {
+        default = { "lsp", "path", "buffer" },
+        per_filetype = {
+          lua = { inherit_defaults = true, "lazydev" },
+          sql = { "dadbod", "buffer" },
+          mysql = { "dadbod", "buffer" },
+          plsql = { "dadbod", "buffer" },
         },
-
-        formatting = {
-          fields = { 'menu', 'abbr', 'kind' },
-          expandable_indicator = true,
-          format = function(entry, vim_item)
-            -- Format with lspkind
-            vim_item = lspkind.cmp_format({
-              mode = "symbol_text",
-              menu = {
-                nvim_lsp = "λ",
-                async_path = "🖫",
-                buffer = "Ω",
-                nvim_lua = 'Π',
-                vim_dadbod_completion = "🛢",
-                nvim_lsp_signature_help = "〽",
-              },
-              maxwidth = 50,
-            })(entry, vim_item)
-
-            -- Apply tailwind colorizer
-            vim_item = require("tailwindcss-colorizer-cmp").formatter(entry, vim_item)
-
-            return vim_item
-          end,
-        },
-
-        mapping = cmp.mapping.preset.insert({
-          ["<M-p>"] = cmp.mapping.scroll_docs(-4),
-          ["<M-n>"] = cmp.mapping.scroll_docs(4),
-          ["<C-e>"] = cmp.mapping.close(),
-
-          ["<C-y>"] = cmp.mapping.confirm({
-            behavior = cmp.ConfirmBehavior.Insert,
-            select = true,
-          }),
-          ["<M-y>"] = cmp.mapping(
-            cmp.mapping.confirm({
-              behavior = cmp.ConfirmBehavior.Replace,
-              select = false,
-            }),
-            { "i", "c" }
-          ),
-
-          -- Ctrl-Space to manually trigger completion
-          ["<c-space>"] = cmp.mapping({
-            i = cmp.mapping.complete(),
-            c = function(_)
-              if cmp.visible() then
-                if not cmp.confirm({ select = true }) then
-                  return
-                end
-              else
-                cmp.complete()
-              end
-            end,
-          }),
-        }),
-
-        sorting = {
-          priority_weight = 2,
-          comparators = {
-            -- Default sorting
-            cmp.config.compare.offset,
-            cmp.config.compare.exact,
-            cmp.config.compare.score,
-            cmp.config.compare.recently_used,
-            cmp.config.compare.locality,
-
-            -- Underscore handling
-            function(entry1, entry2)
-              local _, entry1_under = entry1.completion_item.label:find("^_+")
-              local _, entry2_under = entry2.completion_item.label:find("^_+")
-              entry1_under = entry1_under or 0
-              entry2_under = entry2_under or 0
-              if entry1_under > entry2_under then
-                return false
-              elseif entry1_under < entry2_under then
-                return true
-              end
-            end,
-
-            cmp.config.compare.kind,
-            cmp.config.compare.sort_text,
-            cmp.config.compare.length,
-            cmp.config.compare.order,
+        providers = {
+          -- show buffer words alongside LSP items, not only when LSP has none
+          lsp = { fallbacks = {} },
+          lazydev = { name = "LazyDev", module = "lazydev.integrations.blink", score_offset = 100 },
+          dadbod = { name = "Dadbod", module = "vim_dadbod_completion.blink" },
+          buffer = {
+            -- in / and ? searches, wait for 5 characters
+            min_keyword_length = function(ctx) return ctx.mode == "cmdline" and 5 or 0 end,
+          },
+          cmdline = {
+            -- in : commands, wait for 4 characters
+            min_keyword_length = function(ctx) return ctx.mode == "cmdline" and 4 or 0 end,
+            max_items = 7,
           },
         },
+      },
 
-      })
+      cmdline = {
+        completion = { menu = { auto_show = true } },
+      },
 
-      -- Command line completion
-      cmp.setup.cmdline("/", {
-        mapping = cmp.mapping.preset.cmdline(),
-        sources = {
-          { name = "buffer", keyword_length = 5 },
-        },
-      })
-
-      cmp.setup.cmdline(":", {
-        mapping = cmp.mapping.preset.cmdline(),
-        sources = cmp.config.sources({
-          { name = "async_path", keyword_length = 4, max_item_count = 7 },
-          { name = "cmdline",    keyword_length = 5, max_item_count = 7 },
-        }),
-        matching = { disallow_symbol_nonprefix_matching = false },
-        formatting = {
-          fields = { "abbr" },
-          expandable_indicator = true,
-        },
-      })
-
-      -- SQL/Database completion
-      cmp.setup.filetype({ "sql", "mysql", "plsql" }, {
-        sources = cmp.config.sources({
-          { name = "vim-dadbod-completion", priority = 1000 },
-          { name = "buffer",                priority = 500 },
-        }),
-      })
-
-      -- Complextras line completion
-      vim.api.nvim_set_keymap(
-        "i",
-        "<C-x><C-m>",
-        [[<c-r>=luaeval("require('complextras').complete_matching_line()")<CR>]],
-        { noremap = true, desc = "[<C-x><C-m>] Complete line completion" }
-      )
-    end,
+      fuzzy = {
+        implementation = "prefer_rust_with_warning",
+        -- 'label' also sorts entries starting with `_` last
+        sorts = { "exact", "score", "sort_text", "label" },
+      },
+    },
+    opts_extend = { "sources.default" },
   },
 }

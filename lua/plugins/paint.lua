@@ -25,7 +25,7 @@ return {
         -- Integration with new plugins
         integrations = {
           treesitter = true,
-          cmp = true,
+          blink_cmp = true,
           mason = true,
           dadbod_ui = true,
           gitsigns = {

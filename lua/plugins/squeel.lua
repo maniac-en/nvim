@@ -30,19 +30,7 @@ return {
       vim.g.db_ui_force_echo_notifications = 1
       vim.g.db_ui_win_position = "left"
       vim.g.db_ui_winwidth = 40
-
-      -- Set up SQL file type completion
-      vim.api.nvim_create_autocmd("FileType", {
-        pattern = { "sql", "mysql", "plsql" },
-        callback = function()
-          require("cmp").setup.buffer({
-            sources = {
-              { name = "vim-dadbod-completion", priority = 1000 },
-              { name = "buffer",                priority = 500 },
-            },
-          })
-        end,
-      })
+      -- SQL completion comes from blink.cmp (lua/plugins/completion.lua)
     end,
   },
 }

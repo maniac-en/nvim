@@ -9,17 +9,50 @@
 
 -- Don't leave undo files for the throwaway sample files
 vim.o.undofile = false
+-- Keep "-- INSERT --" and similar mode text out of the output
+vim.o.showmode = false
 
+-- Results are printed as each check runs; a summary follows at the end
+local function print_line(line)
+  io.stdout:write(line .. "\n")
+  io.stdout:flush()
+end
 local results = {}
 local function check(name, ok, detail)
-  results[#results + 1] = { name = name, ok = ok and true or false, detail = detail }
+  ok = ok and true or false
+  results[#results + 1] = { name = name, ok = ok }
+  print_line(("%s  %s"):format(ok and "PASS" or "FAIL", name))
+  if not ok and detail then
+    print_line("      " .. tostring(detail):gsub("\n", "\n      "))
+  end
 end
 
--- Run a group of checks; an error inside counts as a failed check
+-- Sections are registered here and run in order inside a coroutine at the end,
+-- so checks that type keys can wait without blocking Neovim's main loop.
+-- An error inside a section counts as a failed check.
+local sections = {}
 local function section(name, fn)
-  local ok, err = xpcall(fn, debug.traceback)
-  if not ok then check(name .. ": no errors", false, err) end
+  sections[#sections + 1] = { name = name, fn = fn }
 end
+
+-- Wait for cond() without blocking the main loop (queued keys get processed).
+-- Only usable inside a section. Returns whether cond() became true.
+local function await(cond, timeout)
+  local co = assert(coroutine.running(), "await() must run inside a section")
+  local start = vim.uv.now()
+  local function tick()
+    local ok = cond()
+    if ok or vim.uv.now() - start > (timeout or 5000) then
+      coroutine.resume(co, ok and true or false)
+    else
+      vim.defer_fn(tick, 30)
+    end
+  end
+  vim.defer_fn(tick, 0)
+  return coroutine.yield()
+end
+-- Queue keys as if typed (processed by the main loop during await)
+local function keys(k) vim.api.nvim_feedkeys(vim.keycode(k), "t", false) end
 
 local root = vim.fn.tempname()
 local function write(path, lines)
@@ -229,6 +262,68 @@ section("other languages", function()
 end)
 
 ----------------------------------------------------------------------------
+section("completion", function()
+  check("completion: nvim-cmp is gone", package.loaded.cmp == nil and not pcall(require, "cmp"))
+
+  write("go/comp.go", { "package main", "", "func helper() {", "\t", "}" })
+  local buf = open("go/comp.go")
+  wait_client(buf, "gopls")
+  await(function() return false end, 1500) -- let gopls load the package
+
+  local blink = require("blink.cmp")
+  check("completion: Rust fuzzy matcher active", require("blink.cmp.fuzzy").implementation_type == "rust",
+    require("blink.cmp.fuzzy").implementation_type)
+  local gopls = vim.lsp.get_clients({ bufnr = buf, name = "gopls" })[1]
+  check("completion: LSP clients get blink.cmp capabilities", gopls and vim.deep_equal(
+    gopls.config.capabilities.textDocument.completion, blink.get_lsp_capabilities().textDocument.completion))
+
+  -- Typing shows LSP items; <C-y> accepts the selected (first) one
+  vim.api.nvim_win_set_cursor(0, { 4, 1 })
+  keys("A")
+  await(function() return vim.fn.mode() == "i" end)
+  keys("fmt.Prin")
+  local shown = await(function()
+    for _, item in ipairs(blink.get_items() or {}) do
+      if item.source_id == "lsp" and item.label == "Println" then return blink.is_menu_visible() end
+    end
+  end, 10000)
+  check("completion: menu shows LSP items while typing", shown,
+    vim.inspect(vim.tbl_map(function(i) return i.label end, vim.list_slice(blink.get_items() or {}, 1, 5))))
+  keys("<C-y>")
+  local accepted = await(function() return vim.api.nvim_get_current_line():find("fmt%.Print%w*%(") ~= nil end)
+  check("completion: <C-y> accepts an item", accepted, vim.api.nvim_get_current_line())
+  keys("<Esc>")
+  await(function() return vim.fn.mode() == "n" end)
+
+  -- No completion inside comments
+  vim.api.nvim_buf_set_lines(buf, 3, 4, false, { "\t// fmt.Prin" })
+  vim.api.nvim_win_set_cursor(0, { 4, 11 })
+  keys("a")
+  await(function() return vim.fn.mode() == "i" end)
+  keys("t")
+  check("completion: no menu inside comments", not await(function() return blink.is_menu_visible() end, 2000))
+  keys("<Esc>")
+  await(function() return vim.fn.mode() == "n" end)
+  vim.cmd("silent! bwipeout!")
+
+  -- Filetype-specific sources
+  local providers = function() return vim.tbl_keys(require("blink.cmp.sources.lib").get_enabled_providers("default")) end
+  write("misc/t.sql", { "select 1;" })
+  open("misc/t.sql")
+  check("completion: SQL uses dadbod source", vim.tbl_contains(providers(), "dadbod"), vim.inspect(providers()))
+  open("misc/t.lua")
+  check("completion: Lua uses lazydev source", vim.tbl_contains(providers(), "lazydev"), vim.inspect(providers()))
+
+  -- Command-line menu shows automatically (after 4 characters)
+  keys(":checkhea")
+  local cmd_menu = await(function() return vim.fn.mode() == "c" and blink.is_menu_visible() end)
+  keys("<C-c>")
+  await(function() return vim.fn.mode() == "n" end)
+  io.stdout:write("\n") -- headless Neovim echoes the typed command line to stdout
+  check("completion: cmdline menu shows while typing", cmd_menu)
+end)
+
+----------------------------------------------------------------------------
 section("editor", function()
   for _, cmd in ipairs({ "RunGo", "RunPython", "RunC", "RunJavascript", "RunTypescript", "RunLua" }) do
     check("command :" .. cmd, vim.fn.exists(":" .. cmd) == 2)
@@ -251,7 +346,7 @@ end)
 
 ----------------------------------------------------------------------------
 section("health", function()
-  vim.cmd("checkhealth vim.deprecated")
+  vim.cmd("silent checkhealth vim.deprecated")
   local report = text(0)
   check("health: no deprecated functions", report:find("No deprecated functions detected", 1, true) ~= nil, report)
   vim.cmd("bwipeout!")
@@ -261,21 +356,34 @@ section("health", function()
 end)
 
 ----------------------------------------------------------------------------
-vim.lsp.buf.format = real_format
-vim.cmd.cd("/")
-vim.fn.delete(root, "rf")
+local finished = false
+local function finish()
+  if finished then return end
+  finished = true
+  vim.lsp.buf.format = real_format
+  vim.cmd.cd("/")
+  vim.fn.delete(root, "rf")
 
-local failed = 0
-local out = {}
-for _, r in ipairs(results) do
-  out[#out + 1] = ("%s  %s"):format(r.ok and "PASS" or "FAIL", r.name)
-  if not r.ok then
-    failed = failed + 1
-    if r.detail then
-      out[#out + 1] = "      " .. tostring(r.detail):gsub("\n", "\n      ")
-    end
+  local failed = vim.tbl_filter(function(r) return not r.ok end, results)
+  print_line(("\n%d checks, %d failed"):format(#results, #failed))
+  for _, r in ipairs(failed) do
+    print_line("  FAIL  " .. r.name)
   end
+  vim.cmd(#failed == 0 and "qa!" or "cquit! 1")
 end
-out[#out + 1] = ("\n%d checks, %d failed"):format(#results, failed)
-io.stdout:write("\n" .. table.concat(out, "\n") .. "\n")
-vim.cmd(failed == 0 and "qa!" or "cquit! 1")
+
+-- Never hang silently: report what ran so far and fail
+local limit_minutes = 4
+vim.defer_fn(function()
+  check(("finished within %d minutes"):format(limit_minutes), false, "timed out; results above are partial")
+  finish()
+end, limit_minutes * 60 * 1000)
+
+coroutine.wrap(function()
+  for _, sec in ipairs(sections) do
+    print_line("\n== " .. sec.name)
+    local ok, err = xpcall(sec.fn, debug.traceback)
+    if not ok then check(sec.name .. ": no errors", false, err) end
+  end
+  finish()
+end)()
