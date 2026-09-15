@@ -52,7 +52,7 @@ autocmd("FileType", {
 -- Preferred format options for coding
 autocmd("FileType", {
   group = maniac_aug,
-  pattern = { "sh", "go", "lua", "python" },
+  pattern = { "sh", "go", "lua", "python", "javascript" },
   callback = function()
     vim.opt_local.formatoptions = "jcroql"
   end,

@@ -29,6 +29,12 @@ local function create_runner(filetype, command, key, desc)
   end)
 end
 
+-- C language
+create_runner("c", "gcc -o out % && ./out && rm out")
+autocmd("c", function()
+  vim.opt_local.makeprg = "gcc -Wall -Wextra -o %:r %"
+end)
+
 -- Golang
 create_runner("go", "go run %")
 
@@ -55,6 +61,15 @@ autocmd("go", function(args)
   end, { buffer = buf, desc = "MANIAC_GOLANG: [<leader>dt] [D]ummy [T]est", silent = true })
   vim.opt_local.makeprg = "go build"
 end)
+
+-- JavaScript/Node.js
+create_runner("javascript", "node %")
+create_runner("typescript", "ts-node %")
+create_runner("javascriptreact", "node %")
+create_runner("typescriptreact", "ts-node %")
+
+-- Lua
+create_runner("lua", "lua %")
 
 -- Python
 create_runner("python", "python3 %")
