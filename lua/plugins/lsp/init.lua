@@ -43,16 +43,6 @@ return {
           }
         }
       },
-      --  Faster LuaLS setup for Neovim
-      {
-        "folke/lazydev.nvim",
-        ft = "lua", -- only load on lua files
-        opts = {
-          library = {
-            { path = "${3rd}/luv/library", words = { "vim%.uv" } },
-          },
-        },
-      },
       -- LSP progress indicator
       { "j-hui/fidget.nvim", opts = {}, },
       -- get workspace diagnostics
@@ -71,5 +61,17 @@ return {
 
       vim.lsp.enable(servers)
     end
-  }
+  },
+
+  --  Faster LuaLS setup for Neovim (a separate spec: as a dependency it would
+  --  load with nvim-lspconfig on every file, not just Lua files)
+  {
+    "folke/lazydev.nvim",
+    ft = "lua",
+    opts = {
+      library = {
+        { path = "${3rd}/luv/library", words = { "vim%.uv" } },
+      },
+    },
+  },
 }

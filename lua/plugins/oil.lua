@@ -1,4 +1,7 @@
 -- lua/plugins/oil.lua
+
+-- gitignored entries per directory (see opts below)
+local git_ignored
 return {
   "stevearc/oil.nvim",
   dependencies = { "nvim-tree/nvim-web-devicons" },
@@ -10,6 +13,37 @@ return {
     -- Create a module-scoped variable for detail view toggle
     local detail_view_enabled = false
 
+    -- Gitignored entries per directory: one `git ls-files` per directory,
+    -- cached until the oil view is refreshed (oil's documented recipe; the
+    -- previous version ran `git check-ignore` once per entry)
+    local function new_git_ignored()
+      return setmetatable({}, {
+        __index = function(cache, dir)
+          local ignored = {}
+          local res = vim.system(
+            { "git", "ls-files", "--ignored", "--exclude-standard", "--others", "--directory" },
+            { cwd = dir, text = true }
+          ):wait()
+          if res.code == 0 then
+            for line in vim.gsplit(res.stdout, "\n", { plain = true, trimempty = true }) do
+              ignored[(line:gsub("/$", ""))] = true
+            end
+          end
+          rawset(cache, dir, ignored)
+          return ignored
+        end,
+      })
+    end
+    git_ignored = new_git_ignored()
+
+    -- Re-read .gitignore state on refresh (<C-l>)
+    local refresh = require("oil.actions").refresh
+    local orig_refresh = refresh.callback
+    refresh.callback = function(...)
+      git_ignored = new_git_ignored()
+      orig_refresh(...)
+    end
+
     return {
       -- File system options
       columns = {
@@ -17,27 +51,15 @@ return {
       },
       -- Buffer display and behavior
       view_options = {
-        -- Show hidden files (respects .gitignore)
+        -- Hide dotfiles and gitignored files (toggle with g.)
         show_hidden = false,
-        is_hidden_file = function(name, entry)
-          local dir = require("oil").get_current_dir()
-          if not dir then return false end
-
-          -- Always hide dotfiles
+        is_hidden_file = function(name, bufnr)
           if vim.startswith(name, ".") then
             return true
           end
-
-          -- Fallback to name if entry is not a table
-          local rel_path = type(entry) == "table" and entry.name or name
-
-          -- Check via git check-ignore
-          local result = vim.system({ "git", "check-ignore", rel_path }, {
-            cwd = dir,
-            text = true,
-          }):wait()
-
-          return result.code == 0
+          local dir = require("oil").get_current_dir(bufnr)
+          if not dir then return false end -- not a local directory (e.g. ssh)
+          return git_ignored[dir][name] == true
         end,
         -- Natural sort order (10.txt comes after 2.txt)
         sort = {

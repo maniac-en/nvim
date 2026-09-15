@@ -101,6 +101,15 @@ end
 
 local startup_messages = vim.trim(vim.fn.execute("messages"))
 
+-- Headless Neovim has no UI, so lazy.nvim's VeryLazy event (fired after the
+-- first redraw) never happens; fire it so VeryLazy plugins load as they would
+vim.api.nvim_exec_autocmds("User", { pattern = "VeryLazy", modeline = false })
+
+local function plugin_loaded(name)
+  local plugin = require("lazy.core.config").plugins[name]
+  return plugin ~= nil and plugin._.loaded ~= nil
+end
+
 -- One git repo for all sample files, used as the working directory like a real
 -- project (workspace-diagnostics lists files via `git ls-files` from the cwd,
 -- once per session, at the first LSP attach)
@@ -114,13 +123,13 @@ vim.cmd.cd(vim.fn.fnameescape(root))
 section("startup", function()
   check("startup: no messages/errors in this session", startup_messages == "", startup_messages)
 
-  local res = vim.system({ "nvim", "--headless", "-i", "NONE", "+qa" }):wait()
+  local res = vim.system({ "nvim", "--headless", "-i", "NONE", "+qa" }):wait(30000)
   check("startup: clean nested start (no stderr)", res.code == 0 and vim.trim(res.stderr or "") == "", res.stderr)
 
   local times = {}
   for i = 1, 3 do
     local log = vim.fn.tempname()
-    vim.system({ "nvim", "--headless", "-i", "NONE", "--startuptime", log, "+qa" }):wait()
+    vim.system({ "nvim", "--headless", "-i", "NONE", "--startuptime", log, "+qa" }):wait(30000)
     for _, line in ipairs(vim.fn.readfile(log)) do
       if line:find("NVIM STARTED", 1, true) then times[i] = tonumber(line:match("^(%d+%.%d+)")) end
     end
@@ -129,6 +138,35 @@ section("startup", function()
   end
   table.sort(times)
   check(("startup: median %.1fms (informational)"):format(times[2]), true)
+
+  -- Only these plugins load when starting without a file; everything else waits
+  -- for a file, key, command or VeryLazy (lazy.nvim itself isn't in its plugin list)
+  local expected = { "catppuccin", "nvim-treesitter", "oil.nvim", "vim-lastplace", "nvim-web-devicons" }
+  local probe = [[lua local names = {}
+    for name, p in pairs(require("lazy.core.config").plugins) do
+      if p._.loaded and name ~= "lazy.nvim" then names[#names + 1] = name end
+    end
+    table.sort(names) io.stdout:write(table.concat(names, ","))]]
+  local res2 = vim.system({ "nvim", "--headless", "-i", "NONE", "+" .. probe, "+qa!" }, { text = true }):wait(30000)
+  local loaded = vim.split(vim.trim(res2.stdout or ""), ",", { trimempty = true })
+  table.sort(expected)
+  check("startup: only " .. table.concat(expected, ", ") .. " load without a file",
+    vim.deep_equal(loaded, expected), "loaded: " .. table.concat(loaded, ", "))
+
+  -- Opening a Go file loads the LSP stack but not Lua-only lazydev
+  local go_probe = write("probe/p.go", { "package main" })
+  local res3 = vim.system({ "nvim", "--headless", "-i", "NONE", go_probe, "+" .. probe, "+qa!" }, { text = true }):wait(30000)
+  local go_loaded = vim.split(vim.trim(res3.stdout or ""), ",", { trimempty = true })
+  -- The first vim.ui.select call (e.g. code actions) loads telescope and uses its picker
+  local select_probe = [[lua vim.ui.select({ "a" }, {}, function() end)
+    io.stdout:write(debug.getinfo(vim.ui.select, "S").source)]]
+  local res4 = vim.system({ "nvim", "--headless", "-i", "NONE", "+" .. select_probe, "+qa!" }, { text = true }):wait(30000)
+  check("lazy: first vim.ui.select loads telescope's ui-select",
+    (res4.stdout or ""):find("telescope%-ui%-select") ~= nil, res4.stdout .. (res4.stderr or ""))
+
+  check("startup: a Go file loads nvim-lspconfig but not lazydev",
+    vim.tbl_contains(go_loaded, "nvim-lspconfig") and not vim.tbl_contains(go_loaded, "lazydev.nvim"),
+    "loaded: " .. table.concat(go_loaded, ", "))
 end)
 
 ----------------------------------------------------------------------------
@@ -443,8 +481,74 @@ section("treesitter", function()
   -- http requests as textobjects (queries/http/textobjects.scm)
   write("misc/t.http", { "GET https://example.com", "", "###", "", "POST https://example.com/x", "" })
   open("misc/t.http")
+  check("lazy: opening a .http file loads rest.nvim (:Rest available)",
+    plugin_loaded("rest.nvim") and vim.fn.exists(":Rest") == 2)
   got = yank_after("var", 5, 0)
   check("textobjects: var selects an HTTP request (custom query)", got:find("^POST https://example.com/x") ~= nil, got)
+end)
+
+----------------------------------------------------------------------------
+section("lazy loading", function()
+  local function close_floats()
+    for _, w in ipairs(vim.api.nvim_list_wins()) do
+      if vim.api.nvim_win_is_valid(w) and vim.api.nvim_win_get_config(w).relative ~= "" then
+        pcall(vim.api.nvim_win_close, w, true)
+      end
+    end
+  end
+  write("lazy/t.txt", { "word here" })
+  open("lazy/t.txt")
+
+  check("lazy: lazydev loaded once a Lua file was opened", plugin_loaded("lazydev.nvim"))
+
+  -- keys
+  keys("<C-p>")
+  check("lazy: <C-p> loads telescope and opens a picker",
+    await(function() return plugin_loaded("telescope.nvim") and vim.bo.filetype == "TelescopePrompt" end, 5000),
+    vim.bo.filetype)
+  keys("<Esc><Esc>")
+  await(function() return vim.bo.filetype ~= "TelescopePrompt" end)
+  close_floats()
+
+  keys("<C-\\>")
+  check("lazy: <C-\\> loads toggleterm and opens a terminal",
+    await(function() return plugin_loaded("toggleterm.nvim") and vim.bo.filetype == "toggleterm" end, 5000),
+    vim.bo.filetype)
+  vim.cmd("stopinsert")
+  close_floats()
+
+  keys("<leader>gs")
+  check("lazy: <leader>gs loads fugitive and opens :Git status",
+    await(function() return plugin_loaded("vim-fugitive") and vim.bo.filetype == "fugitive" end, 5000),
+    vim.bo.filetype)
+  vim.cmd("silent! bwipeout")
+
+  -- commands
+  for _, case in ipairs({
+    { cmd = "GV", plugin = "gv.vim" },
+    { cmd = "ZenMode", plugin = "zen-mode.nvim", after = "ZenMode" },
+    { cmd = "FSRead", plugin = "fsread.nvim", after = "FSClear" },
+  }) do
+    open("lazy/t.txt")
+    local ok, err = pcall(vim.cmd, "silent " .. case.cmd)
+    check(("lazy: :%s loads %s"):format(case.cmd, case.plugin), ok and plugin_loaded(case.plugin), err)
+    if case.after then pcall(vim.cmd, case.after) end
+    if case.cmd == "GV" then pcall(vim.cmd, "tabclose") end
+  end
+
+  -- VeryLazy plugins
+  for _, name in ipairs({ "Comment.nvim", "vim-surround", "vim-repeat", "vim-unimpaired" }) do
+    check("lazy: " .. name .. " loaded on VeryLazy", plugin_loaded(name))
+  end
+  local tbuf = open("lazy/t.txt")
+  vim.api.nvim_win_set_cursor(0, { 1, 0 })
+  vim.api.nvim_feedkeys(vim.keycode('ysiw"'), "mx", false)
+  check("surround: ysiw\" surrounds a word", vim.api.nvim_buf_get_lines(tbuf, 0, 1, false)[1] == '"word" here',
+    vim.api.nvim_buf_get_lines(tbuf, 0, 1, false)[1])
+  vim.api.nvim_feedkeys(vim.keycode("]<Space>"), "mx", false)
+  check("unimpaired: ]<Space> adds a blank line below", vim.api.nvim_buf_line_count(tbuf) == 2,
+    vim.inspect(vim.api.nvim_buf_get_lines(tbuf, 0, -1, false)))
+  vim.api.nvim_buf_delete(tbuf, { force = true })
 end)
 
 ----------------------------------------------------------------------------
@@ -520,11 +624,14 @@ local function finish()
   vim.cmd(#failed == 0 and "qa!" or "cquit! 1")
 end
 
--- Never hang silently: report what ran so far and fail
+-- Never hang silently: report what ran so far and fail. Exits the process
+-- directly, since :cquit may not get through while a section is blocked.
 local limit_minutes = 4
 vim.defer_fn(function()
   check(("finished within %d minutes"):format(limit_minutes), false, "timed out; results above are partial")
-  finish()
+  pcall(finish)
+  io.stdout:flush()
+  os.exit(1)
 end, limit_minutes * 60 * 1000)
 
 coroutine.wrap(function()

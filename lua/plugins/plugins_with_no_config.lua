@@ -1,18 +1,18 @@
--- lua/plugins/plugins_with_no_config.txt
+-- lua/plugins/plugins_with_no_config.lua
 
 return {
   {
-    -- recall the last cursor position
+    -- recall the last cursor position (must be loaded before files are read)
     { "farmergreg/vim-lastplace" },
     -- add/delete/update surroundings in pairs
-    { "tpope/vim-surround" },
+    { "tpope/vim-surround",           event = "VeryLazy" },
     -- better dot repeats
-    { "tpope/vim-repeat" },
+    { "tpope/vim-repeat",             event = "VeryLazy" },
     -- some handy maps
-    { "tpope/vim-unimpaired" },
+    { "tpope/vim-unimpaired",         event = "VeryLazy" },
     -- flow state reading
-    { "nullchilly/fsread.nvim" },
-    -- devicons
-    { "nvim-tree/nvim-web-devicons" },
+    { "nullchilly/fsread.nvim",       cmd = { "FSRead", "FSClear", "FSToggle" } },
+    -- devicons (loaded by the plugins that use it)
+    { "nvim-tree/nvim-web-devicons",  lazy = true },
   },
 }

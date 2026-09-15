@@ -154,6 +154,7 @@ return {
   -- Improved commenting with treesitter awareness
   {
     "numToStr/Comment.nvim",
+    event = "VeryLazy",
     dependencies = { "JoosepAlviste/nvim-ts-context-commentstring" },
     config = function()
       require("Comment").setup({

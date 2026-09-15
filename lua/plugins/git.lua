@@ -3,8 +3,12 @@ return {
   -- Fugitive: Git commands in nvim
   {
     "tpope/vim-fugitive",
-    event = { "VeryLazy", "BufReadPre" },
-    cmd = { "Git", "Gvdiffsplit", "GBrowse", "Gdiffsplit", "Gwrite", "Gread" },
+    cmd = {
+      "G", "Git", "Gdiffsplit", "Gvdiffsplit", "Ghdiffsplit", "GBrowse", "Gread", "Gwrite", "Gwq",
+      "Gedit", "Gsplit", "Gvsplit", "Gtabedit", "Gpedit", "Gdrop", "Gclog", "Gllog", "Ggrep", "Glgrep",
+      "GMove", "GRename", "GDelete", "GRemove", "GUnlink", "Gcd", "Glcd",
+    },
+    keys = { "<leader>gs", "<leader>gb" },
     dependencies = { "tpope/vim-rhubarb" },
     config = function()
       local map = function(mode, lhs, rhs, desc, silent)
@@ -58,6 +62,7 @@ return {
   -- GV: A git commit browser in Vim
   {
     "junegunn/gv.vim",
+    cmd = "GV",
     dependencies = {
       "tpope/vim-fugitive",
     },

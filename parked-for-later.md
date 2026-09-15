@@ -20,3 +20,14 @@ Things deliberately postponed. Pick one up when it becomes a real need.
 - **To revisit:** fork rest.nvim, switch to `vim.validate(name, value, type)`
   calls, point `lua/plugins/rest.lua` at the fork, then remove the rest.nvim
   entry from `known_deprecations` in `tests/smoke.lua`.
+
+## Switch the AI commit script from Gemini to Claude
+- **Now:** `:AiCommit` (`ftplugin/gitcommit.lua`) runs `~/.local/bin/ai-commit-msg.sh`
+  (outside this repo). That script calls the Gemini API (`gemini-2.0-flash`, via
+  `curl`, with `GEMINI_API_KEY`) and writes the message into the commit file.
+- **Why parked:** it's a change to an external script, separate from the
+  Neovim config work.
+- **To revisit:** point the script at Claude (e.g. the Anthropic Messages API
+  with `ANTHROPIC_API_KEY`, or the `claude` CLI), keeping the same contract:
+  takes the commit file path, writes the message into it, exits non-zero on
+  failure. `:AiCommit` itself shouldn't need changes.

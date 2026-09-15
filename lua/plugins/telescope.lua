@@ -2,10 +2,21 @@
 return {
   {
     "nvim-telescope/telescope.nvim",
-    -- branch = "0.1.x",
-    commit = "b4da76be54691e854d3e0e02c36b0245f945c2c7",
-    cmd = "Telescope",
-    lazy = false,
+    -- loads on first use of these commands/keys (mappings are defined in config below)
+    cmd = { "Telescope", "TelescopeProjectRoot" },
+    keys = {
+      "<C-b>", "<C-p>", "<M-p>", "<C-f>", "z=", "<C-_>",
+      "<leader>ft", "<leader>sh", "<leader>sd", "<leader>sr", "<leader>sw", "<leader>ss", "<leader>sf",
+    },
+    init = function()
+      -- telescope-ui-select replaces vim.ui.select (code actions, etc.) once
+      -- telescope loads; load it on the first vim.ui.select call too
+      ---@diagnostic disable-next-line: duplicate-set-field
+      vim.ui.select = function(...)
+        require("lazy").load({ plugins = { "telescope.nvim" } })
+        return vim.ui.select(...)
+      end
+    end,
     dependencies = {
       "nvim-lua/plenary.nvim",
       {
