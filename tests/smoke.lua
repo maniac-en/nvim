@@ -3,7 +3,7 @@
 -- keymaps. Checks behavior, not exact formatter output. Needs the Mason tools
 -- (and go, git) installed. Takes ~30-60s.
 --
--- Run:
+-- Run: tests/run.sh   (or directly:)
 --   nvim --headless -i NONE -c 'lua dofile(vim.fn.stdpath("config") .. "/tests/smoke.lua")'
 -- Exit code is 0 when every check passes, 1 otherwise.
 
@@ -186,14 +186,14 @@ section("other languages", function()
   git_init("misc")
   -- format: true = must change on save, false = must stay untouched, nil = not checked
   local cases = {
-    { file = "t.c", server = "clangd", content = { "int main(){return 0;}" } },
-    { file = "t.ts", server = "ts_ls", content = { "let x: number = 1;" } },
-    { file = "t.js", server = "ts_ls", content = { "const a = 1;", "a = 2;" }, linter = "quick-lint-js" },
-    { file = "t.json", server = "jsonls", content = { '{"a":1,', '"b":[1,2]}' }, format = true },
-    { file = "t.css", server = "cssls", content = { "p{color:red;margin:0}" }, format = true },
-    { file = "t.html", server = "html", content = { "<div><p>hi</p>", "      <p>there</p></div>" }, format = false },
-    { file = "t.sh", server = "bashls", content = { "echo hi" } },
-    { file = "t.lua", server = "lua_ls", content = { "local x = 1" } },
+    { file = "t.c",    server = "clangd", content = { "int main(){return 0;}" } },
+    { file = "t.ts",   server = "ts_ls",  content = { "let x: number = 1;" } },
+    { file = "t.js",   server = "ts_ls",  content = { "const a = 1;", "a = 2;" },                     linter = "quick-lint-js" },
+    { file = "t.json", server = "jsonls", content = { '{"a":1,', '"b":[1,2]}' },                      format = true },
+    { file = "t.css",  server = "cssls",  content = { "p{color:red;margin:0}" },                      format = true },
+    { file = "t.html", server = "html",   content = { "<div><p>hi</p>", "      <p>there</p></div>" }, format = false },
+    { file = "t.sh",   server = "bashls", content = { "echo hi" } },
+    { file = "t.lua",  server = "lua_ls", content = { "local x = 1" } },
   }
   for _, case in ipairs(cases) do
     write("misc/" .. case.file, case.content)
