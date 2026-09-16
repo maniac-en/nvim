@@ -53,8 +53,8 @@ return {
       end,
     })
 
-    vim.keymap.set("n", "<leader>li", function()
+    require("config.map").set("n", "<leader>li", function()
       lint.try_lint()
-    end, { desc = "Trigger linting for current file" })
+    end, "Lint", "[L]int current file now")
   end,
 }

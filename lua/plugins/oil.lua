@@ -1,4 +1,5 @@
 -- lua/plugins/oil.lua
+local key = require("config.map").lazy
 
 -- gitignored entries per directory (see opts below)
 local git_ignored
@@ -7,7 +8,7 @@ return {
   dependencies = { "nvim-tree/nvim-web-devicons" },
   lazy = false,
   keys = {
-    { "-", "<CMD>Oil<CR>", desc = "Open parent directory in Oil" },
+    key("-", "<CMD>Oil<CR>", "Files", "open parent directory (oil)"),
   },
   opts = function()
     -- Create a module-scoped variable for detail view toggle

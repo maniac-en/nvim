@@ -1,4 +1,6 @@
 -- lua/plugins/editor.lua
+local key = require("config.map").lazy
+
 return {
   -- Detect indentation automatically: from the file itself, or from sibling
   -- files of the same type for new/unindented files. Modelines and .editorconfig
@@ -15,14 +17,10 @@ return {
   {
     "mbbill/undotree",
     keys = {
-      {
-        "<leader>u",
-        function()
-          vim.cmd.UndotreeToggle()
-          vim.cmd.UndotreeFocus() -- Automatically focus the undotree panel
-        end,
-        desc = "MANIAC_UNDOTREE [<leader>u] Toggle [U]ndoTree",
-      },
+      key("<leader>u", function()
+        vim.cmd.UndotreeToggle()
+        vim.cmd.UndotreeFocus() -- Automatically focus the undotree panel
+      end, "Undo", "[U]ndotree toggle"),
     },
     init = function()
       -- Configure undotree appearance

@@ -52,7 +52,6 @@ local function complete_from_workspace()
   offer(matches)
 end
 
-vim.keymap.set("i", "<C-x><C-m>", complete_from_buffer,
-  { desc = "MANIAC_COMPLETION: [<C-x><C-m>] Complete line containing this text (buffer)" })
-vim.keymap.set("i", "<C-x><C-w>", complete_from_workspace,
-  { desc = "MANIAC_COMPLETION: [<C-x><C-w>] Complete line containing this text (workspace)" })
+local map = require("config.map").set
+map("i", "<C-x><C-m>", complete_from_buffer, "Completion", "whole line [M]atching this text (buffer)")
+map("i", "<C-x><C-w>", complete_from_workspace, "Completion", "whole line matching this text ([W]orkspace)")

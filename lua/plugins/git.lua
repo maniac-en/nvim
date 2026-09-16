@@ -1,4 +1,6 @@
 -- lua/plugins/git.lua
+local key = require("config.map").lazy
+
 return {
   -- Fugitive: Git commands in nvim
   {
@@ -8,22 +10,13 @@ return {
       "Gedit", "Gsplit", "Gvsplit", "Gtabedit", "Gpedit", "Gdrop", "Gclog", "Gllog", "Ggrep", "Glgrep",
       "GMove", "GRename", "GDelete", "GRemove", "GUnlink", "Gcd", "Glcd",
     },
-    keys = { "<leader>gs", "<leader>gb" },
+    -- declared here (not in config) so they're described before fugitive loads;
+    -- :AiCommit lives in ftplugin/gitcommit.lua
+    keys = {
+      key("<leader>gs", "<cmd>Git<CR>", "Git", "[G]it [S]tatus", { silent = true }),
+      key("<leader>gb", ":GBrowse %<CR>", "Git", "[G]it [B]rowse (open file in browser)"),
+    },
     dependencies = { "tpope/vim-rhubarb" },
-    config = function()
-      local map = function(mode, lhs, rhs, desc, silent)
-        silent = silent or false
-        if desc then
-          desc = "MANIAC_FUGITIVE: " .. desc
-        end
-        vim.keymap.set(mode, lhs, rhs, { remap = false, silent = silent, desc = desc })
-      end
-
-      map("n", "<leader>gs", vim.cmd.Git, "[<leader>gs] [G]it [S]tatus", true)
-      map("n", "<leader>gb", ":GBrowse %<CR>", "[<leader>gb] [G]it [B]rowse", false)
-
-      -- :AiCommit lives in ftplugin/gitcommit.lua
-    end,
   },
 
   -- Gitsigns: Git decorations

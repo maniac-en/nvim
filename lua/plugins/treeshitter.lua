@@ -63,7 +63,8 @@ return {
 
       -- Grow/shrink the selection by syntax node, on top of the built-in
       -- visual-mode `an` (parent node) / `in` (child node)
-      vim.keymap.set("n", "<C-space>", function()
+      local map = require("config.map").set
+      map("n", "<C-space>", function()
         -- select the node under the cursor itself (`van` would skip one-character nodes)
         local node = vim.treesitter.get_node()
         if not node then return vim.cmd("normal van") end -- no parser: LSP selection range fallback
@@ -75,9 +76,9 @@ return {
         vim.api.nvim_win_set_cursor(0, { sr + 1, sc })
         vim.cmd("normal! v")
         vim.api.nvim_win_set_cursor(0, { er + 1, math.max(ec - 1, 0) })
-      end, { desc = "MANIAC_TS: [<C-space>] Select node under cursor" })
-      vim.keymap.set("x", "<C-space>", "an", { remap = true, desc = "MANIAC_TS: [<C-space>] Grow selection to parent node" })
-      vim.keymap.set("x", "<C-backspace>", "in", { remap = true, desc = "MANIAC_TS: [<C-backspace>] Shrink selection to child node" })
+      end, "Select", "syntax node under cursor")
+      map("x", "<C-space>", "an", "Select", "grow to parent node", { remap = true })
+      map("x", "<C-backspace>", "in", "Select", "shrink to child node", { remap = true })
     end,
   },
 
@@ -95,59 +96,64 @@ return {
       local move = require("nvim-treesitter-textobjects.move")
       local swap = require("nvim-treesitter-textobjects.swap")
 
-      local function map(modes, lhs, fn, desc)
-        vim.keymap.set(modes, lhs, fn, { desc = "MANIAC_TS: " .. desc })
-      end
+      local map = require("config.map").set
 
-      -- Select: { keys, capture, description }
+      -- Select (x, o): { keys, capture, description }
       for _, obj in ipairs({
-        { "a=", "@assignment.outer", "outer part of an assignment" },
-        { "i=", "@assignment.inner", "inner part of an assignment" },
-        { "l=", "@assignment.lhs", "left hand side of an assignment" },
-        { "r=", "@assignment.rhs", "right hand side of an assignment" },
-        { "aa", "@parameter.outer", "outer part of a parameter/argument" },
-        { "ia", "@parameter.inner", "inner part of a parameter/argument" },
-        { "ai", "@conditional.outer", "outer part of a conditional" },
-        { "ii", "@conditional.inner", "inner part of a conditional" },
-        { "al", "@loop.outer", "outer part of a loop" },
-        { "il", "@loop.inner", "inner part of a loop" },
-        { "af", "@call.outer", "outer part of a function call" },
-        { "if", "@call.inner", "inner part of a function call" },
-        { "am", "@function.outer", "outer part of a method/function definition" },
-        { "im", "@function.inner", "inner part of a method/function definition" },
-        { "ac", "@class.outer", "outer part of a class" },
-        { "ic", "@class.inner", "inner part of a class" },
-        { "ab", "@block.outer", "outer part of a block" },
-        { "ib", "@block.inner", "inner part of a block" },
-        { "ir", "@request.inner", "inner HTTP request" }, -- queries/http/textobjects.scm
-        { "ar", "@request.outer", "HTTP request" },
-        { "ad", "@comment.outer", "outer part of a comment" },
+        { "am", "@function.outer", "[a]round [m]ethod or function" },
+        { "im", "@function.inner", "[i]nside [m]ethod or function" },
+        { "af", "@call.outer", "[a]round [f]unction call" },
+        { "if", "@call.inner", "[i]nside [f]unction call" },
+        { "ac", "@class.outer", "[a]round [c]lass" },
+        { "ic", "@class.inner", "[i]nside [c]lass" },
+        { "aa", "@parameter.outer", "[a]round [a]rgument" },
+        { "ia", "@parameter.inner", "[i]nside [a]rgument" },
+        { "ai", "@conditional.outer", "[a]round [i]f (conditional)" },
+        { "ii", "@conditional.inner", "[i]nside [i]f (conditional)" },
+        { "al", "@loop.outer", "[a]round [l]oop" },
+        { "il", "@loop.inner", "[i]nside [l]oop" },
+        { "ab", "@block.outer", "[a]round [b]lock" },
+        { "ib", "@block.inner", "[i]nside [b]lock" },
+        { "a=", "@assignment.outer", "[a]round assignment [=]" },
+        { "i=", "@assignment.inner", "[i]nside assignment [=]" },
+        { "l=", "@assignment.lhs", "[l]eft side of assignment [=]" },
+        { "r=", "@assignment.rhs", "[r]ight side of assignment [=]" },
+        { "ad", "@comment.outer", "around comment ([d]oc)" },
+        { "ar", "@request.outer", "[a]round HTTP [r]equest" }, -- queries/http/textobjects.scm
+        { "ir", "@request.inner", "[i]nside HTTP [r]equest" },
       }) do
-        map({ "x", "o" }, obj[1], function() select.select_textobject(obj[2], "textobjects") end,
-          ("[%s] Select %s"):format(obj[1], obj[3]))
+        map({ "x", "o" }, obj[1], function() select.select_textobject(obj[2], "textobjects") end, "Textobject", obj[3])
       end
 
-      -- Move: ]x next start, [x previous start
-      for key, capture in pairs({ f = "@function.outer", c = "@class.outer", p = "@parameter.inner", b = "@block.outer", r = "@request.outer" }) do
-        map({ "n", "x", "o" }, "]" .. key, function() move.goto_next_start(capture, "textobjects") end,
-          ("[]%s] Next %s start"):format(key, capture))
-        map({ "n", "x", "o" }, "[" .. key, function() move.goto_previous_start(capture, "textobjects") end,
-          ("[[%s] Previous %s start"):format(key, capture))
+      -- Move (n, x, o): ]x next start, [x previous start
+      for key, target in pairs({
+        f = { "@function.outer", "[f]unction" },
+        c = { "@class.outer", "[c]lass" },
+        p = { "@parameter.inner", "[p]arameter" },
+        b = { "@block.outer", "[b]lock" },
+        r = { "@request.outer", "HTTP [r]equest" },
+      }) do
+        map({ "n", "x", "o" }, "]" .. key, function() move.goto_next_start(target[1], "textobjects") end,
+          "Move", "next " .. target[2])
+        map({ "n", "x", "o" }, "[" .. key, function() move.goto_previous_start(target[1], "textobjects") end,
+          "Move", "previous " .. target[2])
       end
 
       -- Swap parameters
-      map("n", "<leader>sa", function() swap.swap_next("@parameter.inner") end, "[<leader>sa] Swap with next parameter")
-      map("n", "<leader>sA", function() swap.swap_previous("@parameter.inner") end, "[<leader>sA] Swap with previous parameter")
+      map("n", "<leader>sa", function() swap.swap_next("@parameter.inner") end, "Swap", "[S]wap [A]rgument with next")
+      map("n", "<leader>sA", function() swap.swap_previous("@parameter.inner") end, "Swap",
+        "[S]wap [A]rgument with previous")
 
       -- vim way: ; repeats in the direction you were moving, , the opposite;
       -- builtin f/F/t/T are repeatable the same way
       local repeat_move = require("nvim-treesitter-textobjects.repeatable_move")
-      vim.keymap.set({ "n", "x", "o" }, ";", repeat_move.repeat_last_move)
-      vim.keymap.set({ "n", "x", "o" }, ",", repeat_move.repeat_last_move_opposite)
-      vim.keymap.set({ "n", "x", "o" }, "f", repeat_move.builtin_f_expr, { expr = true })
-      vim.keymap.set({ "n", "x", "o" }, "F", repeat_move.builtin_F_expr, { expr = true })
-      vim.keymap.set({ "n", "x", "o" }, "t", repeat_move.builtin_t_expr, { expr = true })
-      vim.keymap.set({ "n", "x", "o" }, "T", repeat_move.builtin_T_expr, { expr = true })
+      local nxo = { "n", "x", "o" }
+      map(nxo, ";", repeat_move.repeat_last_move, "Move", "repeat last move (same direction)")
+      map(nxo, ",", repeat_move.repeat_last_move_opposite, "Move", "repeat last move (opposite direction)")
+      map(nxo, "f", repeat_move.builtin_f_expr, "Move", "[f]ind character forward (repeat with ; ,)", { expr = true })
+      map(nxo, "F", repeat_move.builtin_F_expr, "Move", "[F]ind character backward (repeat with ; ,)", { expr = true })
+      map(nxo, "t", repeat_move.builtin_t_expr, "Move", "[t]ill character forward (repeat with ; ,)", { expr = true })
+      map(nxo, "T", repeat_move.builtin_T_expr, "Move", "[T]ill character backward (repeat with ; ,)", { expr = true })
     end,
   },
 

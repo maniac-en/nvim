@@ -1,15 +1,15 @@
 -- lua/config/langtools.lua
 -- Language-specific runners, test shortcuts and filetype settings
 
+local map = require("config.map").set
 local group = vim.api.nvim_create_augroup("maniac_langtools", { clear = true })
 local autocmd = function(pattern, callback)
   vim.api.nvim_create_autocmd("FileType", { group = group, pattern = pattern, callback = callback })
 end
 
 -- Helper function to create a runner for a specific language
-local function create_runner(filetype, command, key, desc)
+local function create_runner(filetype, command, key)
   local map_key = key or "<leader>r"
-  local description = desc or string.format("[%s] %s run", map_key, filetype)
 
   -- Create a custom command for the filetype
   local cmd_name = string.format("Run%s", string.upper(string.sub(filetype, 1, 1)) .. string.sub(filetype, 2))
@@ -22,10 +22,8 @@ local function create_runner(filetype, command, key, desc)
 
   -- Set up the keybinding for this filetype
   autocmd(filetype, function(args)
-    local desc_prefix = string.format("MANIAC_%s", string.upper(filetype))
-    vim.keymap.set("n", map_key,
-      function() vim.cmd(cmd_name) end,
-      { buffer = args.buf, desc = desc_prefix .. " : " .. description, silent = true })
+    map("n", map_key, function() vim.cmd(cmd_name) end, "Run", "[R]un current file",
+      { buffer = args.buf, silent = true })
   end)
 end
 
@@ -41,13 +39,13 @@ create_runner("go", "go run %")
 -- Golang test shortcuts
 autocmd("go", function(args)
   local buf = args.buf
-  vim.keymap.set("n", "<leader>t", function()
+  map("n", "<leader>t", function()
     vim.cmd("write")
     local command = string.format(":vsp term://go test -v %%:p:h/*.go")
     vim.cmd(command)
     vim.cmd("startinsert")
-  end, { buffer = buf, desc = "MANIAC_GOLANG: [<leader>t] [T]est", silent = true })
-  vim.keymap.set("n", "<leader>dt", function()
+  end, "Test", "[T]est package", { buffer = buf, silent = true })
+  map("n", "<leader>dt", function()
     vim.cmd("write")
     local main_go_file = vim.fn.input("Main GO file > ")
     if main_go_file == "" then
@@ -58,7 +56,7 @@ autocmd("go", function(args)
     local command = string.format(":vsp term://go test -v %%:h/%s %%", main_go_file)
     vim.cmd(command)
     vim.cmd("startinsert")
-  end, { buffer = buf, desc = "MANIAC_GOLANG: [<leader>dt] [D]ummy [T]est", silent = true })
+  end, "Test", "[D]ummy [T]est with a main file", { buffer = buf, silent = true })
   vim.opt_local.makeprg = "go build"
 end)
 
@@ -79,9 +77,7 @@ end)
 
 -- HTTP (For testing with rest.nvim)
 autocmd("http", function(args)
-  vim.keymap.set("n", "<leader>r", ":Rest run<CR>", {
-    buffer = args.buf, desc = "MANIAC_http : run the http request under the server",
-  })
+  map("n", "<leader>r", ":Rest run<CR>", "HTTP", "[R]un request under cursor", { buffer = args.buf })
 end)
 
 -- Markdown settings

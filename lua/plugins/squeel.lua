@@ -1,4 +1,6 @@
 -- lua/plugins/squeel.lua
+local key = require("config.map").lazy
+
 return {
   {
     "kristijanhusak/vim-dadbod-ui",
@@ -20,7 +22,7 @@ return {
       },
     },
     keys = {
-      { "<leader>db", "<cmd>DBUIToggle<cr>", desc = "Toggle DB UI" },
+      key("<leader>db", "<cmd>DBUIToggle<cr>", "DB", "toggle [D]ata[B]ase UI"),
     },
     init = function()
       vim.g.db_ui_use_nerd_fonts = 1
