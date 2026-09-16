@@ -1,4 +1,11 @@
 -- lua/plugins/paint.lua
+
+-- Transparent editor background and floating windows (let the terminal show through)
+local transparent = false
+-- Solid floating windows: borders blend into the float background, colored title
+-- bars (telescope: red prompt, lavender results, green preview)
+local solid_floats = false
+
 return {
   {
     "catppuccin/nvim",
@@ -7,10 +14,11 @@ return {
     config = function()
       local colors = require("catppuccin.palettes").get_palette("macchiato")
       require("catppuccin").setup({
-        -- transparent_background = true,
-        -- float = {
-        --   transparent = true,
-        -- },
+        transparent_background = transparent,
+        float = {
+          transparent = transparent,
+          solid = solid_floats,
+        },
         flavour = "macchiato",
         styles = {
           strings = { "italic" },
@@ -50,13 +58,11 @@ return {
           dadbod_ui = true,
           gitsigns = {
             enabled = true,
-            -- Set to true if you're using transparent background
+            -- hunk previews: colored text without diff backgrounds (independent of `transparent`)
             transparent = true,
           },
           telescope = {
             enabled = true,
-            -- Enable style for telescope prompt
-            -- style = "nvchad",
           },
         },
       })

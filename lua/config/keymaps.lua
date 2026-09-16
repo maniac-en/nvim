@@ -26,8 +26,6 @@ map("n", "tn", ":tabe<SPACE>", "[tn] [T]ab [N]ew", false, false)
 map("n", "tc", vim.cmd.tabclose, "[tc] [T]ab [C]lose", true, false)
 
 map("t", "<ESC>", "<C-\\><C-n>", "[<ESC>] [Esc]ape into normal mode in terminal", false, false)
--- not needed when vim.o.hlsearch = false, also just use <C-L>
--- map("n", "<SPACE>", ":noh<BAR>:echo<CR>", "[<SPACE>] Stop highlighting text with <SPACE>", false, false)
 map(
   "n",
   "<leader>ev",
@@ -55,10 +53,5 @@ map("x", "<leader>s", ":sort u<CR>", "[<leader>s] Sort selection uniquely", true
 map("x", "J", ":m '>+1<CR>gv=gv", "[J] Move selected lines up/down with indentation", false, false)
 map("x", "K", ":m '<-2<CR>gv=gv", "[K] Move selected lines up/down with indentation", false, false)
 
--- Just use [q, ]q, [Q, ]Q, [CTRL-Q, ]CTRL-Q
--- map("n", "<C-j>", ":cnext<CR>", "[<C-j>] Next quickfix list hit", false, false)
--- map("n", "<C-k>", ":cprevious<CR>", "[<C-k>] Prev quickfix list hit", false, false)
-
--- Just use  [l, ]l, [L, ]L, [CTRL-L, ]CTRL-L
--- map("n", "<M-j>", ":lnext<CR>", "[<M-j>] Next location list hit", false, false)
--- map("n", "<M-k>", ":lprevious<CR>", "[<M-k>] Prev location list hit", false, false)
+-- Quickfix / location list navigation is built in (Neovim 0.11+):
+--   ]q [q next/prev, ]Q [Q last/first, ]<C-q> [<C-q> next/prev file; same with l for location lists

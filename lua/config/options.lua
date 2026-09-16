@@ -4,8 +4,6 @@
 -- Use shorthand variables for conciseness
 local opt = vim.opt
 local o = vim.o
--- local wo = vim.wo
--- local g = vim.g
 local fn = vim.fn
 local api = vim.api
 local HOME = fn.expand("$HOME")
@@ -34,14 +32,13 @@ opt.smartcase = true  -- ...a capital letter is used
 
 -- Mouse and clipboard
 opt.mouse = "a" -- Enable mouse mode
--- opt.clipboard = "unnamedplus"  -- Uncomment to sync clipboard with system
+-- system clipboard stays explicit: visual <C-y> copies to it, "+p pastes (lua/config/keymaps.lua)
 
 -- File handling
 opt.directory = fn.stdpath("state") .. "/swap//"   -- Swap files (~/.local/state/nvim/swap); // names them by full path
 opt.undofile = true                                 -- Save undo history
 opt.undodir = fn.stdpath("state") .. "/undo//"      -- Undo files (~/.local/state/nvim/undo)
 opt.undolevels = 10000                              -- Maximum number of changes that can be undone
--- opt.fileencodings = "utf-8,iso-2022-jp,sjis,euc-jp" -- Fallback file encodings
 
 ----------------
 -- UI Settings --
@@ -60,7 +57,6 @@ opt.splitright = true -- Open vertical splits to the right
 
 -- Appearance
 opt.cursorline = true                    -- Highlight the current line
--- opt.colorcolumn = "80"                   -- Show column guide
 opt.signcolumn = "yes"                   -- Always show sign column
 opt.termguicolors = true                 -- True color support
 opt.display = "lastline,uhex"            -- Show as much as possible of last line

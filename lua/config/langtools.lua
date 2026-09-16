@@ -86,8 +86,6 @@ end)
 
 -- Markdown settings
 autocmd("markdown", function()
-  -- Uncomment if you want conceallevel
-  -- vim.opt_local.conceallevel = 2
   vim.opt_local.spell = true
   vim.opt_local.wrap = true
   vim.opt_local.textwidth = 80
@@ -95,7 +93,6 @@ end)
 
 -- Database output settings
 autocmd("dbout", function()
-  vim.opt_local.colorcolumn = "0"
   vim.opt_local.spell = false
 end)
 
