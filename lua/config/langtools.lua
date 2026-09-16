@@ -99,10 +99,8 @@ autocmd("dbout", function()
   vim.opt_local.spell = false
 end)
 
--- Quickfix list settings
-autocmd("qf", function(args)
-  vim.keymap.set("n", "<CR>", ":.cc<CR>",
-    { buffer = args.buf, desc = "MANIAC_QUICKFIXLIST : Open the file/row/column under the cursor", silent = true })
+-- Quickfix/location list settings (<CR> jumps to the entry by default)
+autocmd("qf", function()
   vim.opt_local.wrap = false
   vim.opt_local.number = true
   vim.opt_local.cursorline = true

@@ -553,6 +553,30 @@ end)
 
 ----------------------------------------------------------------------------
 section("editor", function()
+  -- <CR> in quickfix and location list windows jumps to the entry under the cursor
+  write("qf/target.txt", { "one", "two", "three" })
+  local target = root .. "/qf/target.txt"
+  for _, kind in ipairs({ "quickfix", "location" }) do
+    vim.cmd("silent! only | enew")
+    local entries = { { filename = target, lnum = 1, text = "first" }, { filename = target, lnum = 3, text = "third" } }
+    if kind == "quickfix" then
+      vim.fn.setqflist({}, "r")
+      vim.fn.setqflist(entries, "r")
+      vim.cmd("copen")
+    else
+      vim.fn.setqflist({}, "r") -- empty quickfix list: a quickfix-only command would fail here
+      vim.fn.setloclist(0, entries, "r")
+      vim.cmd("lopen")
+    end
+    vim.api.nvim_win_set_cursor(0, { 2, 0 }) -- second entry
+    vim.v.errmsg = ""
+    vim.api.nvim_feedkeys(vim.keycode("<CR>"), "mx", false)
+    local jumped = vim.api.nvim_buf_get_name(0) == target and vim.api.nvim_win_get_cursor(0)[1] == 3
+    check(("%s list: <CR> jumps to the entry"):format(kind), jumped and vim.v.errmsg == "",
+      ("buf=%s line=%d errmsg=%s"):format(vim.api.nvim_buf_get_name(0), vim.api.nvim_win_get_cursor(0)[1], vim.v.errmsg))
+    vim.cmd("silent! cclose | silent! lclose | silent! only")
+  end
+
   for _, cmd in ipairs({ "RunGo", "RunPython", "RunC", "RunJavascript", "RunTypescript", "RunLua" }) do
     check("command :" .. cmd, vim.fn.exists(":" .. cmd) == 2)
   end
