@@ -552,6 +552,58 @@ section("lazy loading", function()
 end)
 
 ----------------------------------------------------------------------------
+section("telescope", function()
+  -- LSP pickers must not be filtered by file ignore patterns: a definition in a
+  -- path like .../golang.org/... used to be dropped by an unanchored "%.o"
+  check("telescope: no global file_ignore_patterns (LSP pickers unfiltered)",
+    vim.tbl_isempty(require("telescope.config").values.file_ignore_patterns or {}),
+    vim.inspect(require("telescope.config").values.file_ignore_patterns))
+
+  -- gd (telescope lsp_definitions) into a dependency under a golang.org/ path; offline via replace
+  write("tele_go/deps/golang.org/dep/go.mod", { "module example.org/dep", "", "go 1.22" })
+  write("tele_go/deps/golang.org/dep/dep.go", { "package dep", "", "func Hello() string { return \"hi\" }" })
+  write("tele_go/go.mod", { "module example.com/tele", "", "go 1.22", "",
+    "require example.org/dep v0.0.0", "", "replace example.org/dep => ./deps/golang.org/dep" })
+  write("tele_go/main.go", { "package main", "", 'import "example.org/dep"', "", "func main() {", "\t_ = dep.Hello()", "}" })
+  local gbuf = open("tele_go/main.go")
+  wait_client(gbuf, "gopls")
+  await(function() return false end, 2500)
+  vim.api.nvim_win_set_cursor(0, { 6, 9 }) -- on Hello
+  vim.api.nvim_feedkeys("gd", "mx", false)
+  local target = root .. "/tele_go/deps/golang.org/dep/dep.go"
+  check("telescope: gd reaches a definition under a golang.org/ path",
+    await(function() return vim.api.nvim_buf_get_name(0) == target end, 10000), vim.api.nvim_buf_get_name(0))
+
+  -- <leader>sf (hidden + no_ignore) lists real files, hides .git/, node_modules/ and binaries
+  local shown_files = { "tele/internal/auth.api.go", "tele/cmd/server.app/main.go", "tele/pkg/target/x.go",
+    "tele/scripts/rebuild/run.sh", "tele/notes/todo.org", "tele/config.old.yaml", "tele/app/.air.toml" }
+  local hidden_files = { "tele/.git/HEAD", "tele/sub/.git/config", "tele/node_modules/x/index.js",
+    "tele/web/node_modules/y/a.js", "tele/bin/app.o", "tele/lib/libfoo.a", "tele/report.pdf", "tele/.DS_Store" }
+  for _, f in ipairs(vim.list_extend(vim.deepcopy(shown_files), hidden_files)) do write(f, { "x" }) end
+  open("tele/config.old.yaml")
+  vim.api.nvim_feedkeys(vim.keycode("<leader>sf"), "mx", false)
+  local picker
+  await(function()
+    local ok, pk = pcall(require("telescope.actions.state").get_current_picker, vim.api.nvim_get_current_buf())
+    picker = ok and pk or nil
+    return picker ~= nil
+  end)
+  await(function() return false end, 1500) -- let the finder finish
+  local listed = {}
+  if picker then
+    for entry in picker.manager:iter() do listed[entry.value] = true end
+    require("telescope.actions").close(picker.prompt_bufnr)
+  end
+  local missing, leaked = {}, {}
+  for _, f in ipairs(shown_files) do if not listed[f] then missing[#missing + 1] = f end end
+  for _, f in ipairs(hidden_files) do if listed[f] then leaked[#leaked + 1] = f end end
+  check("telescope: <leader>sf shows real files like auth.api.go, server.app/, target/, rebuild/",
+    picker ~= nil and #missing == 0, "missing: " .. table.concat(missing, ", "))
+  check("telescope: <leader>sf hides .git/, node_modules/ and binaries", picker ~= nil and #leaked == 0,
+    "leaked: " .. table.concat(leaked, ", "))
+end)
+
+----------------------------------------------------------------------------
 section("editor", function()
   -- <CR> in quickfix and location list windows jumps to the entry under the cursor
   write("qf/target.txt", { "one", "two", "three" })

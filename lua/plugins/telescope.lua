@@ -34,6 +34,18 @@ return {
       local themes = require("telescope.themes")
       local builtin = require("telescope.builtin")
 
+      -- Paths hidden from the file pickers (find_files, live_grep, grep_string),
+      -- mainly for <M-p>/<leader>sf which skip .gitignore. Lua patterns, anchored
+      -- to whole directory names / file extensions. Not set globally: telescope
+      -- would also filter LSP pickers (gd, gi, ...) by these, on absolute paths.
+      local file_ignore_patterns = {
+        "^%.git/", "/%.git/",
+        "^node_modules/", "/node_modules/",
+        "%.DS_Store$",
+        "%.o$", "%.a$", "%.out$", "%.class$",
+        "%.pdf$", "%.mkv$", "%.mp4$", "%.zip$",
+      }
+
       -- Layout configurations
       local default_layout = {
         prompt_position = "top",
@@ -64,22 +76,6 @@ return {
             "--hidden",
             "--glob=!.git/",
           },
-          file_ignore_patterns = {
-            "node_modules/",
-            "%.git/",
-            "%.DS_Store",
-            "target/",
-            "build/",
-            "dist/",
-            "%.o",
-            "%.a",
-            "%.out",
-            "%.class",
-            "%.pdf",
-            "%.mkv",
-            "%.mp4",
-            "%.zip",
-          },
           path_display = { "truncate" },
           winblend = 10,
           set_env = { ["COLORTERM"] = "truecolor" },
@@ -94,12 +90,14 @@ return {
               n = { ["dd"] = actions.delete_buffer },
             },
           },
-          find_files = { hidden = true, },
+          find_files = { hidden = true, file_ignore_patterns = file_ignore_patterns },
           live_grep = {
+            file_ignore_patterns = file_ignore_patterns,
             additional_args = function()
               return { "--hidden" }
             end,
           },
+          grep_string = { file_ignore_patterns = file_ignore_patterns },
           git_files = { show_untracked = true },
         },
         extensions = {
