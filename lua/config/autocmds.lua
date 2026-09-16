@@ -34,14 +34,15 @@ autocmd("BufWritePre", {
   end,
 })
 
--- disable line numbers in terminal
+-- disable line numbers and spell in terminal windows (window-local, so other
+-- windows keep them)
 autocmd("TermOpen", {
   group = maniac_aug,
   pattern = "*",
   callback = function()
-    vim.o.number = false
-    vim.o.relativenumber = false
-    vim.o.spell = false
+    vim.opt_local.number = false
+    vim.opt_local.relativenumber = false
+    vim.opt_local.spell = false
   end,
 })
 
