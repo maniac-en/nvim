@@ -5,12 +5,12 @@ vim.diagnostic.config({
   virtual_text = {
     format = function(diagnostic)
       local message = diagnostic.message
-      -- Truncate long messages for performance
-      if #message > 60 then
-        return message:sub(1, 60) .. "..."
+      -- Truncate long messages (by characters, so multi-byte text isn't cut mid-character)
+      if vim.fn.strchars(message) > 60 then
+        message = vim.fn.strcharpart(message, 0, 60) .. "..."
       end
       if diagnostic.severity == vim.diagnostic.severity.ERROR then
-        return "E: " .. message
+        message = "E: " .. message
       end
       return message
     end,
@@ -26,7 +26,7 @@ vim.diagnostic.config({
       return (diagnostic.source or "?") .. "> "
     end,
     scope = "line",
-    source = "if_many",
+    source = false, -- the prefix above already names the source
     -- border comes from 'winborder' (lua/config/options.lua)
   },
 })
