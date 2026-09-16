@@ -633,6 +633,16 @@ section("editor", function()
     check("command :" .. cmd, vim.fn.exists(":" .. cmd) == 2)
   end
 
+  -- Same-named files in different directories get distinct swap files ('directory' ends in //)
+  write("swap/a/same.txt", { "a" })
+  write("swap/b/same.txt", { "b" })
+  open("swap/a/same.txt")
+  local swap_a = vim.fn.swapname("%")
+  open("swap/b/same.txt")
+  local swap_b = vim.fn.swapname("%")
+  check("swap: same-named files get distinct, full-path swap names",
+    swap_a ~= swap_b and swap_a:find("swap%%a%%same.txt") ~= nil, swap_a .. " vs " .. swap_b)
+
   -- Trailing whitespace is stripped on save without moving the cursor or the search
   write("ws/t.txt", { "x   ", "hello" })
   local buf = open("ws/t.txt")

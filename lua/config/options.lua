@@ -33,7 +33,7 @@ opt.mouse = "a" -- Enable mouse mode
 -- opt.clipboard = "unnamedplus"  -- Uncomment to sync clipboard with system
 
 -- File handling
-opt.directory = HOME .. "/.cache/nvim"              -- Swap file directory
+opt.directory = HOME .. "/.cache/nvim//"            -- Swap files; trailing // names them by full path (no collisions)
 opt.undofile = true                                 -- Save undo history
 opt.undodir = fn.stdpath("data") .. "/undodir"      -- Undo file directory (existing history lives here)
 opt.undolevels = 10000                              -- Maximum number of changes that can be undone
