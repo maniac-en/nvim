@@ -22,6 +22,26 @@ return {
           StatusLine = { bg = colors.base, fg = colors.base },
           StatusLineNC = { bg = colors.base, fg = colors.base },
         },
+        -- Styles for LSP diagnostics virtual text, underlines and inlay hints
+        lsp_styles = {
+          virtual_text = {
+            errors = { "italic" },
+            hints = { "italic" },
+            warnings = { "italic" },
+            information = { "italic" },
+            ok = { "italic" },
+          },
+          underlines = {
+            errors = { "underline" },
+            hints = { "underline" },
+            warnings = { "underline" },
+            information = { "underline" },
+            ok = { "underline" },
+          },
+          inlay_hints = {
+            background = true,
+          },
+        },
         -- Integration with new plugins
         integrations = {
           treesitter = true,
@@ -37,26 +57,6 @@ return {
             enabled = true,
             -- Enable style for telescope prompt
             -- style = "nvchad",
-          },
-          native_lsp = {
-            enabled = true,
-            virtual_text = {
-              errors = { "italic" },
-              hints = { "italic" },
-              warnings = { "italic" },
-              information = { "italic" },
-              ok = { "italic" },
-            },
-            underlines = {
-              errors = { "underline" },
-              hints = { "underline" },
-              warnings = { "underline" },
-              information = { "underline" },
-              ok = { "underline" },
-            },
-            inlay_hints = {
-              background = true,
-            },
           },
         },
       })
