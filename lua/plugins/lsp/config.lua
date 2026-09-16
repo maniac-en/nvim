@@ -20,8 +20,7 @@ vim.diagnostic.config({
   severity_sort = true,
   update_in_insert = false,
   float = {
-    show_header = true,
-    header = "",
+    header = "", -- no header line
     prefix = function(diagnostic)
       return (diagnostic.source or "?") .. "> "
     end,
