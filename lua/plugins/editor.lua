@@ -1,24 +1,12 @@
 -- lua/plugins/editor.lua
 return {
-  -- Detect indentation automatically
+  -- Detect indentation automatically: from the file itself, or from sibling
+  -- files of the same type for new/unindented files. Modelines and .editorconfig
+  -- take precedence; defaults live in lua/config/options.lua
   {
     "tpope/vim-sleuth",
     event = { "BufReadPre", "BufNewFile" },
-    config = function()
-      -- Set default values (sleuth will override these when it detects different settings)
-      vim.o.tabstop = 4
-      vim.o.softtabstop = 4
-      vim.o.shiftwidth = 4
-      vim.o.expandtab = true
-
-      -- Optional: Add configuration to ignore certain filetypes
-      vim.g.sleuth_no_filetype_indentation = {
-        "text",
-        "help",
-        "markdown",
-      }
-
-      -- Improve performance by disabling features not needed
+    init = function()
       vim.g.sleuth_neighbor_limit = 5 -- Limit number of neighboring files checked
     end,
   },

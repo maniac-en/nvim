@@ -65,6 +65,32 @@ return function(T)
   check("whitespace: .editorconfig trim_trailing_whitespace = false is respected",
     T.lines(ebuf)[1] == "x   ", vim.inspect(T.lines(ebuf)))
 
+  -- Indentation is guessed per file by vim-sleuth (sibling files for new/unindented
+  -- ones); it beats ftplugin defaults, and modelines/.editorconfig beat it
+  local function indent_of(path, lines)
+    if lines then T.write(path, lines) end
+    local b = T.open(path)
+    vim.wait(300)
+    return { sw = vim.fn.shiftwidth(), et = vim.bo[b].expandtab, sts = vim.bo[b].softtabstop }
+  end
+  local two_js = { "function f() {", "  if (x) {", "    return 1;", "  }", "}" }
+  local two = indent_of("indent/two.js", two_js)
+  check("indent: 2-space file gets shiftwidth=2 (spaces)", two.sw == 2 and two.et, vim.inspect(two))
+  local tabs = indent_of("indent/tabs.c", { "int main() {", "\tif (1) {", "\t\treturn 0;", "\t}", "}" })
+  check("indent: tab-indented file gets noexpandtab", tabs.et == false, vim.inspect(tabs))
+  local py = indent_of("indent/two.py", { "def f():", "  if x:", "    return 1" })
+  check("indent: 2-space Python stays 2 (beats the ftplugin's 4)", py.sw == 2 and py.et, vim.inspect(py))
+  local ml = indent_of("indent/modeline.js", vim.list_extend(vim.deepcopy(two_js), { "// vim: set sw=6 et:" }))
+  check("indent: modeline wins, softtabstop follows shiftwidth", ml.sw == 6 and ml.sts == -1, vim.inspect(ml))
+  for _, n in ipairs({ "a", "b", "c" }) do T.write("neighbors/" .. n .. ".js", two_js) end
+  local new_file = indent_of("neighbors/new.js")
+  check("indent: new file takes 2-space style from sibling files", new_file.sw == 2 and new_file.et, vim.inspect(new_file))
+  local flat = indent_of("neighbors/flat.js", { "const a = 1;", "const b = 2;" })
+  check("indent: unindented file takes style from sibling files", flat.sw == 2 and flat.et, vim.inspect(flat))
+  T.write("indent_ec/.editorconfig", { "root = true", "", "[*]", "indent_style = space", "indent_size = 8" })
+  local ec = indent_of("indent_ec/two.js", { "function f() {", "  return 1;", "}" })
+  check("indent: .editorconfig indent_size wins over guessing", ec.sw == 8 and ec.et, vim.inspect(ec))
+
   vim.cmd("enew | setfiletype gitcommit")
   check("gitcommit: :AiCommit is buffer-local", vim.api.nvim_buf_get_commands(0, {}).AiCommit ~= nil
     and vim.api.nvim_get_commands({}).AiCommit == nil)

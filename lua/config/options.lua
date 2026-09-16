@@ -19,7 +19,11 @@ opt.number = true
 opt.relativenumber = true
 opt.ruler = false -- Disable cursor position (using winbar instead)
 
--- Indentation (Use vim-sleuth)
+-- Indentation (defaults; vim-sleuth adapts them to each file, .editorconfig overrides)
+opt.tabstop = 4        -- Width of a tab character
+opt.softtabstop = 4    -- Spaces per <Tab>/<BS> while editing
+opt.shiftwidth = 4     -- Spaces per indent level (>>, <<, auto-indent)
+opt.expandtab = true   -- Indent with spaces
 opt.breakindent = true -- Enable break indent
 
 -- Searching
