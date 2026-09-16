@@ -16,11 +16,18 @@ autocmd("TextYankPost", {
 })
 
 -- clear out trailing spaces on buffer write (without moving the cursor or
--- clobbering the last search pattern)
+-- clobbering the last search pattern), except:
+-- - filetypes where trailing spaces mean something (markdown: two = hard line break)
+-- - when the project's .editorconfig sets trim_trailing_whitespace (true or
+--   false): Neovim's built-in EditorConfig support decides
+local keep_trailing_whitespace = { markdown = true }
 autocmd("BufWritePre", {
   group = maniac_aug,
   pattern = "*",
-  callback = function()
+  callback = function(args)
+    if keep_trailing_whitespace[vim.bo[args.buf].filetype] then return end
+    local editorconfig = vim.b[args.buf].editorconfig
+    if type(editorconfig) == "table" and editorconfig.trim_trailing_whitespace ~= nil then return end
     local view = vim.fn.winsaveview()
     vim.cmd([[keeppatterns %s/\s\+$//e]])
     vim.fn.winrestview(view)

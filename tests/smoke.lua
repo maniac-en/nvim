@@ -653,6 +653,20 @@ section("editor", function()
   check("whitespace: cursor kept", vim.deep_equal(vim.api.nvim_win_get_cursor(0), { 2, 3 }))
   check("whitespace: search pattern kept", vim.fn.getreg("/") == "hello", vim.fn.getreg("/"))
 
+  -- ...but not in markdown, where two trailing spaces are a hard line break
+  write("ws/notes.md", { "first line  ", "second line" })
+  local mbuf = open("ws/notes.md")
+  vim.cmd("silent write")
+  check("whitespace: markdown keeps trailing spaces", lines(mbuf)[1] == "first line  ", vim.inspect(lines(mbuf)))
+
+  -- ...and a project's .editorconfig decides when it sets trim_trailing_whitespace
+  write("ws_ec/.editorconfig", { "root = true", "", "[*]", "trim_trailing_whitespace = false" })
+  write("ws_ec/keep.txt", { "x   ", "y" })
+  local ebuf = open("ws_ec/keep.txt")
+  vim.cmd("silent write")
+  check("whitespace: .editorconfig trim_trailing_whitespace = false is respected",
+    lines(ebuf)[1] == "x   ", vim.inspect(lines(ebuf)))
+
   vim.cmd("enew | setfiletype gitcommit")
   check("gitcommit: :AiCommit is buffer-local", vim.api.nvim_buf_get_commands(0, {}).AiCommit ~= nil
     and vim.api.nvim_get_commands({}).AiCommit == nil)
