@@ -49,9 +49,10 @@ return {
         border = "rounded",
         style = "minimal",
       },
+      -- libuv watcher on .git: signs update as soon as git state changes
       watch_gitdir = {
+        enable = true,
         follow_files = true,
-        interval = 2000,
       },
       attach_to_untracked = true,
       update_debounce = 200,
