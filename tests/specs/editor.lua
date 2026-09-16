@@ -91,6 +91,20 @@ return function(T)
   local ec = indent_of("indent_ec/two.js", { "function f() {", "  return 1;", "}" })
   check("indent: .editorconfig indent_size wins over guessing", ec.sw == 8 and ec.et, vim.inspect(ec))
 
+  -- cloak.nvim hides .env values, and in shell scripts only exported values
+  local function cloaked_lines(path, lines)
+    T.write(path, lines)
+    T.open(path)
+    local ns = vim.api.nvim_create_namespace("cloak")
+    vim.wait(1000, function() return #vim.api.nvim_buf_get_extmarks(0, ns, 0, -1, {}) > 0 end, 20)
+    return vim.tbl_map(function(m) return m[2] + 1 end, vim.api.nvim_buf_get_extmarks(0, ns, 0, -1, {}))
+  end
+  local env = cloaked_lines("cloak/.env", { "API_KEY=sk-live-123", "DEBUG=true" })
+  check("cloak: .env values hidden", vim.deep_equal(env, { 1, 2 }), vim.inspect(env))
+  local sh = cloaked_lines("cloak/deploy.sh",
+    { "export API_KEY=sk-live-123", "count=$((count+1))", "  export TOKEN=abc", 'name="world"', "# export in a comment" })
+  check("cloak: .sh hides only exported values", vim.deep_equal(sh, { 1, 3 }), vim.inspect(sh))
+
   vim.cmd("enew | setfiletype gitcommit")
   check("gitcommit: :AiCommit is buffer-local", vim.api.nvim_buf_get_commands(0, {}).AiCommit ~= nil
     and vim.api.nvim_get_commands({}).AiCommit == nil)

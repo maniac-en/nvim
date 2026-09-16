@@ -45,9 +45,14 @@ return {
       require("cloak").setup({
         enabled = true,
         cloak_character = "*",
-        cloak_highlight_group = "Comment",
-        cloak_fts = { "env", "sh" },
-        cloak_filetypes = { "env", "sh" },
+        highlight_group = "Comment",
+        -- cloak_pattern: Lua pattern per line; `replace` keeps the captured part visible
+        patterns = {
+          -- .env, .env.local, .envrc, ...: every value
+          { file_pattern = ".env*", cloak_pattern = "=.+" },
+          -- shell scripts: only values of exported variables (export API_KEY=*****)
+          { file_pattern = "*.sh", cloak_pattern = { { "^(%s*export%s+[%w_]+=).+", replace = "%1" } } },
+        },
       })
     end,
   },
