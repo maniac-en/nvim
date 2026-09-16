@@ -101,12 +101,11 @@ opt.spell = true                                           -- Enable spellcheck
 opt.spellcapcheck = ""                                     -- Disable first word capitalization spellchecks
 
 -- Folding
-opt.foldmethod = "manual" -- Manual folding
+opt.foldmethod = "manual" -- Manual folding (zf to create)
 opt.foldcolumn = "0"      -- Don't show fold column
 opt.foldtext = ""         -- No custom fold text
-opt.foldlevel = 99        -- Start unfolded by default
-opt.foldlevelstart = 1    -- Start with some folds
-opt.foldnestmax = 4       -- Maximum nesting of folds
+opt.foldlevel = 99        -- Folds open by default
+opt.foldlevelstart = 99   -- Every buffer starts unfolded
 
 ------------------
 -- Performance --

@@ -46,3 +46,14 @@ the plugin.
   project-wide diagnostics (skipped for basedpyright). Built-in alternative:
   `:lua vim.lsp.buf.workspace_diagnostics()` on demand, where the server
   supports it.
+
+## Try treesitter code folding
+- **Now:** manual folding only (`foldmethod=manual`), buffers start unfolded.
+- **Why parked:** folds aren't part of the workflow yet; `gO` / `<leader>ds`
+  (outline) and `]f` / `[f` (jump between functions) cover "overview and jump".
+- **To try:** in `lua/config/options.lua` set
+  `opt.foldmethod = "expr"` and `opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"`
+  (keep `foldlevelstart = 99`, so files still open unfolded). Then:
+  `zM` close all (outline view), `zo`/`zc`/`za` open/close/toggle the one under
+  the cursor, `zR` open all, `zj`/`zk` next/previous fold, `zv` reveal the cursor line.
+  Good for skimming long files and hiding big literals or test tables.
