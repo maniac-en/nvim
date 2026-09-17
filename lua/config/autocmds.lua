@@ -45,37 +45,3 @@ autocmd("TermOpen", {
     vim.opt_local.spell = false
   end,
 })
-
--- file-type buffer-specific format options
-
--- Auto-format paragraphs
-autocmd("FileType", {
-  group = maniac_aug,
-  pattern = { "text" },
-  callback = function()
-    vim.opt_local.formatoptions = vim.opt_local.formatoptions + "a"
-  end,
-})
-
--- Preferred format options for coding
-autocmd("FileType", {
-  group = maniac_aug,
-  pattern = { "sh", "go", "lua", "python", "javascript" },
-  callback = function()
-    vim.opt_local.formatoptions = "jcroql"
-  end,
-})
-
--- In toggleterm buffers, turn write commands (:w, :wq, ...) into a quit
--- https://github.com/akinsho/toggleterm.nvim/issues/155
-autocmd("FileType", {
-  group = maniac_aug,
-  pattern = "toggleterm",
-  callback = function(args)
-    autocmd({ "BufWriteCmd", "FileWriteCmd", "FileAppendCmd" }, {
-      group = maniac_aug,
-      buffer = args.buf,
-      command = "q!",
-    })
-  end,
-})

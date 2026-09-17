@@ -1,4 +1,4 @@
--- ftplugin/gitcommit.lua
+-- after/ftplugin/gitcommit.lua
 -- :AiCommit generates a commit message for the staged changes via an external script
 
 local ai_script_name = "ai-commit-msg.sh" -- Assumes script is in $PATH

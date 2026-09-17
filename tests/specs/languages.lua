@@ -32,4 +32,47 @@ return function(T)
         changed == case.format, T.text(buf))
     end
   end
+
+  -- :make fills the quickfix list (compiler plugins set makeprg + errorformat)
+  T.write("mk/go/go.mod", { "module example.com/mk", "", "go 1.21" })
+  local makes = {
+    {
+      file = "mk/go/main.go",
+      ft = "go",
+      content = { "package main", "", "func main() { undefinedFn() }" },
+      first = { lnum = 3, text = "undefined: undefinedFn" }
+    },
+    {
+      file = "mk/py/a.py",
+      ft = "python",
+      content = { "import os" },
+      first = { lnum = 1, text = "`os` imported but unused" }
+    },
+    {
+      file = "mk/sh/b.sh",
+      ft = "sh",
+      content = { "if true; then" },
+      first = { lnum = 2, text = "syntax error" }
+    },
+    {
+      file = "mk/c/c.c",
+      ft = "c",
+      content = { "int main(){ return x; }" },
+      first = { lnum = 1, text = "undeclared" }
+    },
+  }
+  for _, case in ipairs(makes) do
+    T.write(case.file, case.content)
+    T.open(case.file)
+    vim.cmd.lcd(vim.fn.expand("%:p:h"))
+    vim.fn.setqflist({}, "r")
+    local ok = pcall(function() vim.cmd("silent make!") end)
+    local entries = vim.tbl_filter(function(e) return e.valid == 1 end, vim.fn.getqflist())
+    local first = entries[1]
+    check((":make on a broken %s file fills the quickfix list"):format(case.ft),
+      ok and first ~= nil and first.lnum == case.first.lnum and first.text:find(case.first.text, 1, true) ~= nil,
+      ("makeprg=%s entries=%d first=%s"):format(vim.o.makeprg, #entries,
+        first and first.lnum .. ": " .. first.text or "-"))
+  end
+  vim.cmd.lcd(T.root)
 end

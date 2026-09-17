@@ -55,8 +55,11 @@ return function(T)
 
   -- <C-f> (live grep) searches the whole project, dotfiles included, with paths
   -- relative to the project root even when Neovim's cwd is a subdirectory
-  T.write("tele/app/.air.toml", { "grep_needle_here" })
-  vim.cmd.cd("tele/internal")
+  -- under proj/ (tele/ holds fake .git fixtures, which are repo roots of their own)
+  T.write("proj/app/.air.toml", { "grep_needle_here" })
+  T.write("proj/internal/x.go", { "package internal" })
+  T.open("proj/internal/x.go") -- the root comes from the buffer's file, not Neovim's cwd
+  vim.cmd.cd("proj/internal")
   T.run_keys("<C-f>")
   picker = nil
   await(function()
@@ -76,5 +79,25 @@ return function(T)
   end
   vim.cmd.cd(T.root)
   check("<C-f> finds text in dotfiles, paths relative to the project root",
-    #found == 1 and found[1] == "tele/app/.air.toml", vim.inspect(found))
+    #found == 1 and found[1] == "proj/app/.air.toml",
+    ("cwd=%s found=%s"):format(tostring(picker and picker.cwd), vim.inspect(found)))
+
+  -- From an oil buffer (<C-p> is oil's preview there, so <C-f>): the project root
+  -- comes from the browsed directory, not Neovim's cwd, and the oil:// buffer
+  -- name doesn't send the root search into an endless loop
+  vim.cmd.cd("/")
+  vim.cmd("Oil " .. vim.fn.fnameescape(T.root .. "/proj/internal"))
+  await(function() return vim.bo.filetype == "oil" end)
+  T.run_keys("<C-f>")
+  picker = nil
+  await(function()
+    local ok, pk = pcall(require("telescope.actions.state").get_current_picker, vim.api.nvim_get_current_buf())
+    picker = ok and pk or nil
+    return picker ~= nil
+  end)
+  local cwd = picker and picker.cwd
+  if picker then require("telescope.actions").close(picker.prompt_bufnr) end
+  vim.cmd.cd(T.root)
+  check("<C-f> in oil searches the browsed project, not Neovim's cwd",
+    cwd ~= nil and vim.fs.normalize(tostring(cwd)) == vim.fs.normalize(T.root), tostring(cwd))
 end

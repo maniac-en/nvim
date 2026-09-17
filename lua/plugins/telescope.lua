@@ -7,36 +7,26 @@ local function themes() return require("telescope.themes") end
 -- File pickers get a larger window than the default
 local large_layout = { width = 0.9, height = 0.9 }
 
--- Project root: git toplevel, else the nearest project marker, else the file's directory
+local project_markers = {
+  "package.json", "Cargo.toml", "pyproject.toml", "go.mod",
+  "pom.xml", "build.gradle", "Makefile", "CMakeLists.txt",
+}
+
+-- Directory to start from: the folder shown in oil, the file's folder, else Neovim's cwd
+local function current_dir()
+  if vim.bo.filetype == "oil" then return require("oil").get_current_dir() or vim.fn.getcwd() end
+  local file = vim.api.nvim_buf_get_name(0)
+  return (vim.bo.buftype == "" and file ~= "") and vim.fs.dirname(file) or vim.fn.getcwd()
+end
+
+-- Project root: git root, else the nearest project marker, else the current directory
 local function find_project_root()
-  local current_file = vim.api.nvim_buf_get_name(0)
-  local current_dir = current_file == "" and vim.fn.getcwd()
-      or vim.fn.fnamemodify(current_file, ":h")
-
-  -- Check for git root first
-  local git_cmd = "git -C " .. vim.fn.escape(current_dir, " ") .. " rev-parse --show-toplevel"
-  local git_root = vim.fn.systemlist(git_cmd)[1]
-  if vim.v.shell_error == 0 then
-    return git_root, "git"
-  end
-
-  -- Check for common project markers
-  local project_markers = {
-    "package.json", "Cargo.toml", "pyproject.toml", "go.mod",
-    "pom.xml", "build.gradle", "Makefile", "CMakeLists.txt"
-  }
-
-  local check_dir = current_dir
-  while check_dir ~= "/" do
-    for _, marker in ipairs(project_markers) do
-      if vim.fn.filereadable(check_dir .. "/" .. marker) == 1 then
-        return check_dir, "project"
-      end
-    end
-    check_dir = vim.fn.fnamemodify(check_dir, ":h")
-  end
-
-  return current_dir, "cwd"
+  local dir = current_dir()
+  local root = vim.fs.root(dir, ".git")
+  if root then return root, "git" end
+  root = vim.fs.root(dir, project_markers)
+  if root then return root, "project" end
+  return dir, "cwd"
 end
 
 -- Project files: git files in a repo, else all files from the project root
@@ -50,12 +40,9 @@ local function find_files()
   end
 end
 
--- All files in the current file's directory, including ignored ones
+-- All files in the current directory, including ignored ones
 local function find_files_current_dir()
-  local current_file = vim.api.nvim_buf_get_name(0)
-  local current_dir = current_file == "" and vim.fn.getcwd()
-      or vim.fn.fnamemodify(current_file, ":h")
-  builtin().find_files({ cwd = current_dir, no_ignore = true, layout_config = large_layout, winblend = 10 })
+  builtin().find_files({ cwd = current_dir(), no_ignore = true, layout_config = large_layout, winblend = 10 })
 end
 
 local function live_grep()

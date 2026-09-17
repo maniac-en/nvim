@@ -27,9 +27,21 @@ return function(T)
     vim.cmd("silent! cclose | silent! lclose | silent! only")
   end
 
-  for _, cmd in ipairs({ "RunGo", "RunPython", "RunC", "RunJavascript", "RunTypescript", "RunLua" }) do
-    check("command :" .. cmd, vim.fn.exists(":" .. cmd) == 2)
+  -- :Run and <leader>r exist only in the filetypes that have a run command
+  for _, case in ipairs({
+    { file = "run/t.go", ft = "go" }, { file = "run/t.py", ft = "python" }, { file = "run/t.c", ft = "c" },
+    { file = "run/t.js", ft = "javascript" }, { file = "run/t.ts", ft = "typescript" }, { file = "run/t.lua", ft = "lua" },
+  }) do
+    T.write(case.file, { "" })
+    local buf = T.open(case.file)
+    check((":Run and <leader>r in %s buffers"):format(case.ft),
+      vim.api.nvim_buf_get_commands(buf, {}).Run ~= nil and T.has_buf_map(buf, "n", "<leader>r"),
+      ("ft=%s"):format(vim.bo.filetype))
   end
+  T.write("run/t.txt", { "" })
+  local plain = T.open("run/t.txt")
+  check(":Run is not defined in other buffers",
+    vim.api.nvim_buf_get_commands(plain, {}).Run == nil and vim.api.nvim_get_commands({}).Run == nil)
 
   -- Same-named files in different directories get distinct swap files ('directory' ends in //)
   T.write("swap/a/same.txt", { "a" })

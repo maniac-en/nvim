@@ -1,8 +1,9 @@
 -- lua/config/user_commands.lua
--- https://vi.stackexchange.com/a/43348/29810
+-- :Browse <url> opens a URL in the browser (fugitive's :GBrowse uses it)
 vim.api.nvim_create_user_command("Browse", function(opts)
-  vim.fn.system({ "xdg-open", opts.fargs[1] })
-end, { nargs = 1 })
+  local _, err = vim.ui.open(opts.fargs[1])
+  if err then vim.notify(err, vim.log.levels.ERROR) end
+end, { nargs = 1, desc = "Open a URL in the browser" })
 
 -- https://www.reddit.com/r/neovim/comments/zhweuc/comment/izo9br1/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
 vim.api.nvim_create_user_command("Redir", function(ctx)
