@@ -128,7 +128,6 @@ return {
       -- Move (n, x, o): ]x next start, [x previous start
       for key, target in pairs({
         f = { "@function.outer", "[f]unction" },
-        c = { "@class.outer", "[c]lass" },
         p = { "@parameter.inner", "[p]arameter" },
         b = { "@block.outer", "[b]lock" },
         r = { "@request.outer", "HTTP [r]equest (### title line)" },
@@ -140,9 +139,18 @@ return {
       end
 
       -- Swap parameters
-      map("n", "<leader>sa", function() swap.swap_next("@parameter.inner") end, "Swap", "[S]wap [A]rgument with next")
-      map("n", "<leader>sA", function() swap.swap_previous("@parameter.inner") end, "Swap",
-        "[S]wap [A]rgument with previous")
+      map("n", "<leader>a", function() swap.swap_next("@parameter.inner") end, "Swap", "[A]rgument with next")
+      map("n", "<leader>A", function() swap.swap_previous("@parameter.inner") end, "Swap",
+        "[A]rgument with previous")
+
+      -- ]c/[c are Vim's "jump to the next/previous change" inside a diff
+      -- (:Gdiffsplit, :diffthis); everywhere else they move between classes
+      for key, direction in pairs({ ["]c"] = "next", ["[c"] = "previous" }) do
+        map({ "n", "x", "o" }, key, function()
+          if vim.wo.diff then return vim.cmd.normal({ key, bang = true }) end
+          move["goto_" .. direction .. "_start"]("@class.outer", "textobjects")
+        end, "Move", direction .. " [c]lass, or change inside a diff")
+      end
 
       -- vim way: ; repeats in the direction you were moving, , the opposite;
       -- builtin f/F/t/T are repeatable the same way

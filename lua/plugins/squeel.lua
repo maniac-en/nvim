@@ -22,7 +22,7 @@ return {
       },
     },
     keys = {
-      key("<leader>db", "<cmd>DBUIToggle<cr>", "DB", "toggle [D]ata[B]ase UI"),
+      key("<leader>D", "<cmd>DBUIToggle<cr>", "DB", "toggle [D]atabase UI"),
     },
     init = function()
       vim.g.db_ui_use_nerd_fonts = 1

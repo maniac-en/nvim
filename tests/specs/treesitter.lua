@@ -46,8 +46,8 @@ return function(T)
   check("textobjects: ]f moves to next function, ; repeats",
     after_move == 5 and vim.api.nvim_win_get_cursor(0)[1] == 11, vim.inspect(vim.api.nvim_win_get_cursor(0)))
   vim.api.nvim_win_set_cursor(0, { 12, 8 })
-  T.run_keys("<leader>sa")
-  check("textobjects: <leader>sa swaps arguments",
+  T.run_keys("<leader>a")
+  check("textobjects: <leader>a swaps arguments",
     vim.api.nvim_buf_get_lines(buf, 11, 12, false)[1] == '\thelper("x", 1)',
     vim.api.nvim_buf_get_lines(buf, 11, 12, false)[1])
   vim.cmd("silent undo")

@@ -20,9 +20,9 @@ return function(T)
   T.wait_client(gbuf, "gopls")
   await(function() return false end, 2500)
   vim.api.nvim_win_set_cursor(0, { 6, 9 }) -- on Hello
-  T.run_keys("gd")
+  T.run_keys("grd")
   local target = T.root .. "/tele_go/deps/golang.org/dep/dep.go"
-  check("gd reaches a definition under a golang.org/ path",
+  check("grd reaches a definition under a golang.org/ path",
     await(function() return vim.api.nvim_buf_get_name(0) == target end, 10000), vim.api.nvim_buf_get_name(0))
 
   -- <leader>sf (hidden + no_ignore) lists real files, hides .git/, node_modules/ and binaries

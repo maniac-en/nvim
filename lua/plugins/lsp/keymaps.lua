@@ -19,15 +19,16 @@ vim.api.nvim_create_autocmd("LspAttach", {
     map("n", "K", function() vim.lsp.buf.hover(float_opts) end, "LSP", "hover documentation")
     map("i", "<C-s>", function() vim.lsp.buf.signature_help(float_opts) end, "LSP", "[S]ignature help")
 
-    -- Navigation (telescope pickers); built in as well: grr grn gra gri grt gO
-    map("n", "gd", tele("lsp_definitions"), "LSP", "[G]o to [D]efinition")
-    map("n", "<leader>gd", tele("lsp_definitions", { jump_type = "vsplit" }), "LSP",
-      "[G]o to [D]efinition in vertical split")
-    map("n", "gD", vim.lsp.buf.declaration, "LSP", "[G]o to [D]eclaration")
-    map("n", "gi", tele("lsp_implementations"), "LSP", "[G]o to [I]mplementation")
-    map("n", "<leader>td", tele("lsp_type_definitions"), "LSP", "[T]ype [D]efinition")
-    map("n", "<leader>ds", tele("lsp_document_symbols"), "LSP", "[D]ocument [S]ymbols")
-    map("n", "<leader>ws", tele("lsp_dynamic_workspace_symbols"), "LSP", "[W]orkspace [S]ymbols")
-    map("n", "<leader>sd", tele("diagnostics"), "Search", "[S]earch [D]iagnostics")
+    -- Navigation: every LSP jump is gr + a letter, opening a telescope picker
+    -- (<C-q> in the picker sends the results to the quickfix list). grd and grs
+    -- are ours; grr/gri/grt are Neovim defaults pointed at telescope here.
+    -- Built in and left alone: grn rename, gra code action, grx run codelens.
+    map("n", "grd", tele("lsp_definitions"), "LSP", "[G]o to [D]efinition")
+    map("n", "grr", tele("lsp_references"), "LSP", "[R]eferences")
+    map("n", "gri", tele("lsp_implementations"), "LSP", "[I]mplementations")
+    map("n", "grt", tele("lsp_type_definitions"), "LSP", "[T]ype definition")
+    map("n", "grs", tele("lsp_document_symbols"), "LSP", "[S]ymbols in this file")
+    map("n", "gO", tele("lsp_document_symbols"), "LSP", "symbols in this file (same as grs)")
+    map("n", "<leader>sy", tele("lsp_dynamic_workspace_symbols"), "Search", "[S]earch s[Y]mbols in the project")
   end,
 })

@@ -16,17 +16,14 @@ map("n", "N", "Nzzzv", "Search", "previous match, centered")
 map("n", "<C-d>", "<C-d>zz", "Motion", "half page down, cursor centered")
 map("n", "<C-u>", "<C-u>zz", "Motion", "half page up, cursor centered")
 
--- Windows and tabs (these type the command and wait for a file name)
-map("n", "ts", ":split<Space>", "Window", "[S]plit horizontally (type a file)")
-map("n", "tv", ":vsplit<Space>", "Window", "[V]ertical split (type a file)")
-map("n", "tn", ":tabe<Space>", "Tab", "[N]ew tab (type a file)")
-map("n", "tc", vim.cmd.tabclose, "Tab", "[C]lose tab", { silent = true })
+-- Windows and tabs are built in: <C-w>s / <C-w>v split, :tabnew / :tabclose,
+-- gt / gT switch tabs (2gt goes to tab 2)
 
 map("t", "<Esc>", "<C-\\><C-n>", "Terminal", "[Esc]ape to normal mode")
 
 map("n", "<leader>ev", function() vim.cmd.tabedit(vim.fn.stdpath("config")) end, "Config",
   "[E]dit neo[V]im config in a new tab", { silent = true })
-map("n", "<leader>cd", ":cd %:p:h<CR>:pwd<CR>", "Dir", "[C]hange [D]irectory to current file's folder")
+map("n", "<leader>cd", ":lcd %:p:h<CR>:pwd<CR>", "Dir", "[C]hange [D]irectory to this file's folder (this window)")
 
 -- Editing
 map("n", "J", "mzJ`z", "Edit", "[J]oin lines, keep cursor in place")

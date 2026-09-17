@@ -45,7 +45,7 @@ return function(T)
   check("save formats", vim.tbl_contains(l, "def f(a):"), T.text(buf))
   check("formatted exactly once per save", T.formats == 1, "format calls: " .. T.formats)
 
-  for _, lhs in ipairs({ "<leader>r", "gd", "K" }) do
+  for _, lhs in ipairs({ "<leader>r", "grd", "grr", "grs", "K" }) do
     check("buffer keymap " .. lhs, T.has_buf_map(buf, "n", lhs))
   end
 

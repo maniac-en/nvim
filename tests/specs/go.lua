@@ -37,7 +37,7 @@ return function(T)
   check("gopls reports compile error", sources.compiler, vim.inspect(sources))
   check("golangci-lint typecheck duplicates filtered", not sources.typecheck, vim.inspect(sources))
 
-  for _, lhs in ipairs({ "<leader>r", "<leader>t", "<leader>dt", "gd", "K" }) do
+  for _, lhs in ipairs({ "<leader>r", "<leader>tt", "<leader>tm", "grd", "grr", "grs", "K" }) do
     check("buffer keymap " .. lhs, T.has_buf_map(buf, "n", lhs))
   end
   check("makeprg", vim.bo[buf].makeprg == "go build", vim.bo[buf].makeprg)
