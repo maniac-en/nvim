@@ -1,3 +1,4 @@
+-- lua/plugins/showkeys.lua
 return {
   {
     "nvzone/showkeys",

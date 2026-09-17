@@ -1,3 +1,4 @@
+-- init.lua
 vim.g.mapleader = " "
 
 -- Bootstrap lazy.nvim

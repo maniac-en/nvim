@@ -69,7 +69,7 @@ return {
         local node = vim.treesitter.get_node()
         if not node then return vim.cmd("normal van") end -- no parser: LSP selection range fallback
         local sr, sc, er, ec = node:range()
-        if ec == 0 and er > sr then -- range ends at the start of a line: stop at the previous line's end
+        if ec == 0 and er > sr then                       -- range ends at the start of a line: stop at the previous line's end
           er = er - 1
           ec = #vim.api.nvim_buf_get_lines(0, er, er + 1, false)[1]
         end
@@ -89,7 +89,7 @@ return {
     config = function()
       require("nvim-treesitter-textobjects").setup({
         select = { lookahead = true }, -- jump forward to the next textobject
-        move = { set_jumps = true },    -- record moves in the jumplist
+        move = { set_jumps = true },   -- record moves in the jumplist
       })
 
       local select = require("nvim-treesitter-textobjects.select")
@@ -100,27 +100,27 @@ return {
 
       -- Select (x, o): { keys, capture, description }
       for _, obj in ipairs({
-        { "am", "@function.outer", "[a]round [m]ethod or function" },
-        { "im", "@function.inner", "[i]nside [m]ethod or function" },
-        { "af", "@call.outer", "[a]round [f]unction call" },
-        { "if", "@call.inner", "[i]nside [f]unction call" },
-        { "ac", "@class.outer", "[a]round [c]lass" },
-        { "ic", "@class.inner", "[i]nside [c]lass" },
-        { "aa", "@parameter.outer", "[a]round [a]rgument" },
-        { "ia", "@parameter.inner", "[i]nside [a]rgument" },
+        { "am", "@function.outer",    "[a]round [m]ethod or function" },
+        { "im", "@function.inner",    "[i]nside [m]ethod or function" },
+        { "af", "@call.outer",        "[a]round [f]unction call" },
+        { "if", "@call.inner",        "[i]nside [f]unction call" },
+        { "ac", "@class.outer",       "[a]round [c]lass" },
+        { "ic", "@class.inner",       "[i]nside [c]lass" },
+        { "aa", "@parameter.outer",   "[a]round [a]rgument" },
+        { "ia", "@parameter.inner",   "[i]nside [a]rgument" },
         { "ai", "@conditional.outer", "[a]round [i]f (conditional)" },
         { "ii", "@conditional.inner", "[i]nside [i]f (conditional)" },
-        { "al", "@loop.outer", "[a]round [l]oop" },
-        { "il", "@loop.inner", "[i]nside [l]oop" },
-        { "ab", "@block.outer", "[a]round [b]lock" },
-        { "ib", "@block.inner", "[i]nside [b]lock" },
-        { "a=", "@assignment.outer", "[a]round assignment [=]" },
-        { "i=", "@assignment.inner", "[i]nside assignment [=]" },
-        { "l=", "@assignment.lhs", "[l]eft side of assignment [=]" },
-        { "r=", "@assignment.rhs", "[r]ight side of assignment [=]" },
-        { "ad", "@comment.outer", "around comment ([d]oc)" },
-        { "ar", "@request.outer", "[a]round HTTP [r]equest" }, -- queries/http/textobjects.scm
-        { "ir", "@request.inner", "[i]nside HTTP [r]equest" },
+        { "al", "@loop.outer",        "[a]round [l]oop" },
+        { "il", "@loop.inner",        "[i]nside [l]oop" },
+        { "ab", "@block.outer",       "[a]round [b]lock" },
+        { "ib", "@block.inner",       "[i]nside [b]lock" },
+        { "a=", "@assignment.outer",  "[a]round assignment [=]" },
+        { "i=", "@assignment.inner",  "[i]nside assignment [=]" },
+        { "l=", "@assignment.lhs",    "[l]eft side of assignment [=]" },
+        { "r=", "@assignment.rhs",    "[r]ight side of assignment [=]" },
+        { "ad", "@comment.outer",     "around comment ([d]oc)" },
+        { "ar", "@request.outer",     "[a]round HTTP [r]equest (with ### title)" }, -- queries/http/textobjects.scm
+        { "ir", "@request.inner",     "[i]nside HTTP [r]equest (method to body)" },
       }) do
         map({ "x", "o" }, obj[1], function() select.select_textobject(obj[2], "textobjects") end, "Textobject", obj[3])
       end
@@ -131,7 +131,7 @@ return {
         c = { "@class.outer", "[c]lass" },
         p = { "@parameter.inner", "[p]arameter" },
         b = { "@block.outer", "[b]lock" },
-        r = { "@request.outer", "HTTP [r]equest" },
+        r = { "@request.outer", "HTTP [r]equest (### title line)" },
       }) do
         map({ "n", "x", "o" }, "]" .. key, function() move.goto_next_start(target[1], "textobjects") end,
           "Move", "next " .. target[2])

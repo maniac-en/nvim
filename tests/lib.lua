@@ -47,6 +47,7 @@ end
 
 -- Queue keys as if typed (processed by the main loop during T.await)
 function T.keys(k) vim.api.nvim_feedkeys(vim.keycode(k), "t", false) end
+
 -- Execute keys (mappings included) immediately
 function T.run_keys(k) vim.api.nvim_feedkeys(vim.keycode(k), "mx", false) end
 
@@ -56,11 +57,14 @@ function T.write(path, lines)
   vim.fn.writefile(lines, full)
   return full
 end
+
 function T.open(path)
   vim.cmd("edit " .. vim.fn.fnameescape(T.root .. "/" .. path))
   return vim.api.nvim_get_current_buf()
 end
+
 function T.lines(buf) return vim.api.nvim_buf_get_lines(buf, 0, -1, false) end
+
 function T.text(buf) return table.concat(T.lines(buf), "\n") end
 
 -- `go mod init` in a subdirectory of the spec's repo (gopls wants a module)
@@ -68,30 +72,36 @@ function T.go_module(dir, module)
   vim.fn.mkdir(T.root .. "/" .. dir, "p")
   vim.system({ "go", "mod", "init", module or "example.com/smoke" }, { cwd = T.root .. "/" .. dir }):wait(30000)
 end
+
 -- Stage all files (workspace-diagnostics lists tracked files, once per session)
 function T.git_add_all() vim.system({ "git", "add", "-A" }, { cwd = T.root }):wait(30000) end
 
 function T.client_names(buf)
   return vim.tbl_map(function(c) return c.name end, vim.lsp.get_clients({ bufnr = buf }))
 end
+
 function T.wait_client(buf, name, timeout)
   return vim.wait(timeout or 20000, function()
     return #vim.lsp.get_clients({ bufnr = buf, name = name }) > 0
   end, 100)
 end
+
 function T.wait_formatter(buf, timeout)
   return vim.wait(timeout or 10000, function()
     return #vim.lsp.get_clients({ bufnr = buf, method = "textDocument/formatting" }) > 0
   end, 100)
 end
+
 function T.diag_sources(buf)
   local seen = {}
   for _, d in ipairs(vim.diagnostic.get(buf)) do seen[d.source or "?"] = true end
   return seen
 end
+
 function T.has_buf_map(buf, mode, lhs)
   return vim.fn.maparg(lhs, mode, false, true).buffer == 1 and vim.api.nvim_get_current_buf() == buf
 end
+
 function T.plugin_loaded(name)
   local plugin = require("lazy.core.config").plugins[name]
   return plugin ~= nil and plugin._.loaded ~= nil
@@ -101,7 +111,7 @@ end
 -- now (shown as a passing note). Matched against the warning's stack trace.
 -- Anything else fails the health check.
 local known_deprecations = {
-  { stack = "/rest.nvim/", note = "rest.nvim vim.validate{} (parked: fork rest.nvim)" },
+  { stack = "/rest.nvim/",       note = "rest.nvim vim.validate{} (parked: fork rest.nvim)" },
   { stack = "/toggleterm.nvim/", note = "toggleterm vim.validate{} (tolerated)" },
 }
 
@@ -171,15 +181,19 @@ function T.run(spec_path)
   vim.system({ "git", "init", "-q", T.root }):wait(30000)
   vim.cmd.cd(vim.fn.fnameescape(T.root))
 
-  -- Never hang silently: report what ran so far and fail. Exits the process
-  -- directly, since :cquit may not get through while a spec is blocked.
+  -- Never hang silently: report what ran so far and fail. A plain libuv timer,
+  -- not vim.defer_fn: scheduled callbacks don't run while Neovim waits inside a
+  -- command (e.g. an unmapped <C-\> waiting for its second key), timer callbacks
+  -- do. That context can't use Neovim's API, so it only writes the result and
+  -- exits (the spec's temporary repo is left behind).
   local limit_minutes = 4
-  vim.defer_fn(function()
-    T.check(("finished within %d minutes"):format(limit_minutes), false, "timed out; results above are partial")
-    pcall(finish)
-    io.stdout:flush()
+  vim.uv.new_timer():start(limit_minutes * 60 * 1000, 0, function()
+    local failed = #vim.tbl_filter(function(r) return not r.ok end, T.results) + 1
+    emit(("@@FAIL finished within %d minutes"):format(limit_minutes))
+    emit("@@DETAIL timed out; results above are partial")
+    emit(("@@END %d %d"):format(#T.results + 1, failed))
     os.exit(1)
-  end, limit_minutes * 60 * 1000)
+  end)
 
   coroutine.wrap(function()
     local ok, err = xpcall(function() dofile(spec_path)(T) end, debug.traceback)

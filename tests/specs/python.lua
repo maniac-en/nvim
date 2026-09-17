@@ -15,7 +15,7 @@ return function(T)
     "",
     "def f( a ):",
     '    x: int = "not an int"', -- type error: basedpyright diagnostics must stay silent
-    '    return os.path.join(a,json.dumps(x))',
+    "    return os.path.join(a,json.dumps(x))",
   })
   local buf = T.open("py/t.py")
   check("basedpyright attaches", T.wait_client(buf, "basedpyright"), vim.inspect(T.client_names(buf)))

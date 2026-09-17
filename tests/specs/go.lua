@@ -19,7 +19,7 @@ return function(T)
   vim.cmd("silent write")
   local src = T.text(buf)
   check("save adds missing imports", src:find('"fmt"', 1, true) and src:find('"os"', 1, true), src)
-  check("save formats (gofumpt indent)", src:find('\n\tos.Remove', 1, true) ~= nil, src)
+  check("save formats (gofumpt indent)", src:find("\n\tos.Remove", 1, true) ~= nil, src)
   check("formatted exactly once per save", T.formats == 1, "format calls: " .. T.formats)
 
   local got_errcheck = vim.wait(60000, function() return T.diag_sources(buf).errcheck end, 250)

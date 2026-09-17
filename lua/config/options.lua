@@ -3,10 +3,7 @@
 
 -- Use shorthand variables for conciseness
 local opt = vim.opt
-local o = vim.o
 local fn = vim.fn
-local api = vim.api
-local HOME = fn.expand("$HOME")
 
 ------------------
 -- Editor Basics --
@@ -35,21 +32,22 @@ opt.mouse = "a" -- Enable mouse mode
 -- system clipboard stays explicit: visual <C-y> copies to it, "+p pastes (lua/config/keymaps.lua)
 
 -- File handling
-opt.directory = fn.stdpath("state") .. "/swap//"   -- Swap files (~/.local/state/nvim/swap); // names them by full path
-opt.undofile = true                                 -- Save undo history
-opt.undodir = fn.stdpath("state") .. "/undo//"      -- Undo files (~/.local/state/nvim/undo)
-opt.undolevels = 10000                              -- Maximum number of changes that can be undone
+opt.directory = fn.stdpath("state") .. "/swap//" -- Swap files (~/.local/state/nvim/swap); // names them by full path
+opt.undofile = true                              -- Save undo history
+opt.undodir = fn.stdpath("state") .. "/undo//"   -- Undo files (~/.local/state/nvim/undo)
+opt.undolevels = 10000                           -- Maximum number of changes that can be undone
 
 ----------------
 -- UI Settings --
 ----------------
 
 -- Status display
-vim.o.laststatus = 0 -- Hide statusline, using winbar instead
+opt.laststatus = 0   -- Hide statusline, using winbar instead
+opt.statusline = " " -- Hidden statusline still separates stacked windows; keep that row empty
 
 -- Custom winbar
--- o.winbar = "%=%m %y %F (%l/%L:%v) (%b 0x%B)%="
-o.winbar = "%=%m %y %F (%l/%L:%v)%="
+-- opt.winbar = "%=%m %y %F (%l/%L:%v) (%b 0x%B)%="
+opt.winbar = "%=%m %y %F (%l/%L:%v)%="
 
 -- Window management
 opt.splitbelow = true -- Open horizontal splits below
@@ -69,16 +67,6 @@ opt.sidescroll = 8     -- Horizontal scrolloff
 opt.sidescrolloff = 8  -- Keep 8 columns left/right of cursor
 opt.startofline = true -- Move cursor to 1st non-blank while navigation
 
--- Colors and highlighting
--- Make winbar more visible; runs whenever a colorscheme is (re)applied
-api.nvim_create_autocmd("ColorScheme", {
-  callback = function()
-    local normal_bg = api.nvim_get_hl(0, { name = "Normal" }).bg or 0
-    local normal_fg = api.nvim_get_hl(0, { name = "Normal" }).fg or 0xFFFFFF
-    api.nvim_set_hl(0, "WinBar", { fg = normal_fg, bg = normal_bg, bold = true })
-  end,
-})
-
 ------------------
 -- Text Handling --
 ------------------
@@ -91,10 +79,10 @@ opt.formatoptions = "jcroqlnt"     -- Text formatting options
 opt.backspace = "indent,eol,start" -- Backspace behavior
 
 -- Spelling
-opt.spelllang = "en"                                       -- Spellcheck language
-opt.spellfile = HOME .. "/.config/nvim/spell/en.utf-8.add" -- Custom spell file
-opt.spell = true                                           -- Enable spellcheck
-opt.spellcapcheck = ""                                     -- Disable first word capitalization spellchecks
+opt.spelllang = "en"                                          -- Spellcheck language
+opt.spellfile = fn.stdpath("config") .. "/spell/en.utf-8.add" -- Custom spell file
+opt.spell = true                                              -- Enable spellcheck
+opt.spellcapcheck = ""                                        -- Disable first word capitalization spellchecks
 
 -- Folding
 opt.foldmethod = "manual" -- Manual folding (zf to create)
@@ -114,7 +102,7 @@ opt.report = 0       -- Always report changed lines
 
 -- Autocomplete
 opt.completeopt = "menuone,noselect" -- Better completion experience
-opt.shortmess:append("c")           -- No "match 1 of 2" style ins-completion messages
+opt.shortmess:append("c")            -- No "match 1 of 2" style ins-completion messages
 
 -- Preview
 opt.inccommand = "split" -- Show preview for substitutions

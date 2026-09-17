@@ -42,7 +42,7 @@ end
 -- Project files: git files in a repo, else all files from the project root
 local function find_files()
   local root_dir, root_type = find_project_root()
-  local opts = { cwd = root_dir, hidden = true, layout_config = large_layout, winblend = 10 }
+  local opts = { cwd = root_dir, layout_config = large_layout, winblend = 10 }
   if root_type == "git" then
     builtin().git_files(opts)
   else
@@ -55,12 +55,12 @@ local function find_files_current_dir()
   local current_file = vim.api.nvim_buf_get_name(0)
   local current_dir = current_file == "" and vim.fn.getcwd()
       or vim.fn.fnamemodify(current_file, ":h")
-  builtin().find_files({ cwd = current_dir, hidden = true, no_ignore = true, layout_config = large_layout, winblend = 10 })
+  builtin().find_files({ cwd = current_dir, no_ignore = true, layout_config = large_layout, winblend = 10 })
 end
 
 local function live_grep()
   local root_dir, _ = find_project_root()
-  builtin().live_grep({ search_dirs = { root_dir }, layout_config = large_layout, winblend = 10 })
+  builtin().live_grep({ cwd = root_dir, layout_config = large_layout, winblend = 10 })
 end
 
 local function buffers()
@@ -89,7 +89,7 @@ local function grep_prompt()
 end
 
 local function all_files()
-  builtin().find_files({ hidden = true, no_ignore = true })
+  builtin().find_files({ no_ignore = true })
 end
 
 -- `silent` like the other telescope maps
@@ -193,12 +193,7 @@ return {
             },
           },
           find_files = { hidden = true, file_ignore_patterns = file_ignore_patterns },
-          live_grep = {
-            file_ignore_patterns = file_ignore_patterns,
-            additional_args = function()
-              return { "--hidden" }
-            end,
-          },
+          live_grep = { file_ignore_patterns = file_ignore_patterns },
           grep_string = { file_ignore_patterns = file_ignore_patterns },
           git_files = { show_untracked = true },
         },

@@ -24,7 +24,7 @@ map("n", "tc", vim.cmd.tabclose, "Tab", "[C]lose tab", { silent = true })
 
 map("t", "<Esc>", "<C-\\><C-n>", "Terminal", "[Esc]ape to normal mode")
 
-map("n", "<leader>ev", ":tabedit " .. vim.fn.expand("$HOME") .. "/.config/nvim<CR>", "Config",
+map("n", "<leader>ev", function() vim.cmd.tabedit(vim.fn.stdpath("config")) end, "Config",
   "[E]dit neo[V]im config in a new tab", { silent = true })
 map("n", "<leader>cd", ":cd %:p:h<CR>:pwd<CR>", "Dir", "[C]hange [D]irectory to current file's folder")
 

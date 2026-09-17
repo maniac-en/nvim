@@ -1,5 +1,5 @@
 -- tests/specs/editor.lua
--- Quickfix/location lists, runner commands, swap names, whitespace on save, :AiCommit.
+-- Quickfix/location lists, runner commands, swap names, whitespace on save, :AiCommit, winbar/statusline look, config paths.
 return function(T)
   local check = T.check
 
@@ -84,7 +84,8 @@ return function(T)
   check("indent: modeline wins, softtabstop follows shiftwidth", ml.sw == 6 and ml.sts == -1, vim.inspect(ml))
   for _, n in ipairs({ "a", "b", "c" }) do T.write("neighbors/" .. n .. ".js", two_js) end
   local new_file = indent_of("neighbors/new.js")
-  check("indent: new file takes 2-space style from sibling files", new_file.sw == 2 and new_file.et, vim.inspect(new_file))
+  check("indent: new file takes 2-space style from sibling files", new_file.sw == 2 and new_file.et,
+    vim.inspect(new_file))
   local flat = indent_of("neighbors/flat.js", { "const a = 1;", "const b = 2;" })
   check("indent: unindented file takes style from sibling files", flat.sw == 2 and flat.et, vim.inspect(flat))
   T.write("indent_ec/.editorconfig", { "root = true", "", "[*]", "indent_style = space", "indent_size = 8" })
@@ -108,4 +109,40 @@ return function(T)
   vim.cmd("enew | setfiletype gitcommit")
   check("gitcommit: :AiCommit is buffer-local", vim.api.nvim_buf_get_commands(0, {}).AiCommit ~= nil
     and vim.api.nvim_get_commands({}).AiCommit == nil)
+
+  -- Winbar (used as the statusline) is bold, in the editor's colors, in every window
+  local normal = vim.api.nvim_get_hl(0, { name = "Normal", link = false })
+  for _, group in ipairs({ "WinBar", "WinBarNC" }) do
+    local hl = vim.api.nvim_get_hl(0, { name = group, link = false })
+    check(group .. " is bold with the editor's colors", hl.bold == true and hl.fg == normal.fg and hl.bg == normal.bg,
+      vim.inspect(hl))
+  end
+  -- Statusline (only the separator row between stacked windows) blends into the editor
+  for _, group in ipairs({ "StatusLine", "StatusLineNC" }) do
+    local hl = vim.api.nvim_get_hl(0, { name = group, link = false })
+    check(group .. " is hidden in the editor background", hl.bg == normal.bg, vim.inspect(hl))
+  end
+  -- ...and has no text (e.g. the file name) that a transparent background would reveal
+  T.write("notes.txt", { "hello" })
+  T.open("notes.txt")
+  vim.cmd("split | redraw!")
+  local top = vim.fn.win_getid(1) -- the upper window (splitbelow puts the new one below)
+  local row = vim.fn.win_screenpos(top)[1] + vim.api.nvim_win_get_height(top)
+  local text = {}
+  for col = 1, vim.o.columns do text[#text + 1] = vim.fn.screenstring(row, col) end
+  text = table.concat(text)
+  check("separator row between stacked windows is empty", vim.trim(text) == "", ("row %d: %q"):format(row, text))
+  vim.cmd("only")
+
+  -- Config paths come from stdpath("config"), not a hard-coded ~/.config/nvim
+  local config = vim.fn.stdpath("config")
+  check("spellfile lives in the config dir", vim.o.spellfile == config .. "/spell/en.utf-8.add", vim.o.spellfile)
+  local tabs = #vim.api.nvim_list_tabpages()
+  T.run_keys("<leader>ev")
+  local ev = T.await(function() return vim.bo.filetype == "oil" end)
+  local dir = ev and require("oil").get_current_dir() or vim.api.nvim_buf_get_name(0)
+  check("<leader>ev opens the config dir in a new tab",
+    ev and #vim.api.nvim_list_tabpages() == tabs + 1 and vim.fs.normalize(dir) == vim.fs.normalize(config),
+    ("filetype=%s dir=%s tabs=%d"):format(vim.bo.filetype, dir, #vim.api.nvim_list_tabpages()))
+  vim.cmd("silent! tabonly")
 end

@@ -14,7 +14,8 @@ return function(T)
   T.write("tele_go/deps/golang.org/dep/dep.go", { "package dep", "", "func Hello() string { return \"hi\" }" })
   T.write("tele_go/go.mod", { "module example.com/tele", "", "go 1.22", "",
     "require example.org/dep v0.0.0", "", "replace example.org/dep => ./deps/golang.org/dep" })
-  T.write("tele_go/main.go", { "package main", "", 'import "example.org/dep"', "", "func main() {", "\t_ = dep.Hello()", "}" })
+  T.write("tele_go/main.go",
+    { "package main", "", 'import "example.org/dep"', "", "func main() {", "\t_ = dep.Hello()", "}" })
   local gbuf = T.open("tele_go/main.go")
   T.wait_client(gbuf, "gopls")
   await(function() return false end, 2500)
@@ -51,4 +52,29 @@ return function(T)
     picker ~= nil and #missing == 0, "missing: " .. table.concat(missing, ", "))
   check("<leader>sf hides .git/, node_modules/ and binaries", picker ~= nil and #leaked == 0,
     "leaked: " .. table.concat(leaked, ", "))
+
+  -- <C-f> (live grep) searches the whole project, dotfiles included, with paths
+  -- relative to the project root even when Neovim's cwd is a subdirectory
+  T.write("tele/app/.air.toml", { "grep_needle_here" })
+  vim.cmd.cd("tele/internal")
+  T.run_keys("<C-f>")
+  picker = nil
+  await(function()
+    local ok, pk = pcall(require("telescope.actions.state").get_current_picker, vim.api.nvim_get_current_buf())
+    picker = ok and pk or nil
+    return picker ~= nil
+  end)
+  local found = {}
+  if picker then
+    picker:set_prompt("grep_needle_here")
+    await(function()
+      found = {}
+      for entry in picker.manager:iter() do found[#found + 1] = entry.filename end
+      return #found > 0
+    end, 5000)
+    require("telescope.actions").close(picker.prompt_bufnr)
+  end
+  vim.cmd.cd(T.root)
+  check("<C-f> finds text in dotfiles, paths relative to the project root",
+    #found == 1 and found[1] == "tele/app/.air.toml", vim.inspect(found))
 end

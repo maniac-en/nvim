@@ -24,13 +24,13 @@ return {
     },
     init = function()
       -- Configure undotree appearance
-      vim.g.undotree_WindowLayout = 2    -- Layout style (2 = right side)
-      vim.g.undotree_SplitWidth = 30     -- Width of the undotree panel
-      vim.g.undotree_DiffAutoOpen = 1    -- Auto open diff window
-      vim.g.undotree_DiffpanelHeight = 10 -- Height of diff panel
+      vim.g.undotree_WindowLayout = 2       -- Layout style (2 = right side)
+      vim.g.undotree_SplitWidth = 30        -- Width of the undotree panel
+      vim.g.undotree_DiffAutoOpen = 1       -- Auto open diff window
+      vim.g.undotree_DiffpanelHeight = 10   -- Height of diff panel
       vim.g.undotree_SetFocusWhenToggle = 1 -- Focus undotree when opening
-      vim.g.undotree_ShortIndicators = 1 -- Use short indicators
-      vim.g.undotree_HelpLine = 0        -- Hide help line for more space
+      vim.g.undotree_ShortIndicators = 1    -- Use short indicators
+      vim.g.undotree_HelpLine = 0           -- Hide help line for more space
       -- undofile/undodir/undolevels are set in lua/config/options.lua
     end,
   },
@@ -49,7 +49,7 @@ return {
           -- .env, .env.local, .envrc, ...: every value
           { file_pattern = ".env*", cloak_pattern = "=.+" },
           -- shell scripts: only values of exported variables (export API_KEY=*****)
-          { file_pattern = "*.sh", cloak_pattern = { { "^(%s*export%s+[%w_]+=).+", replace = "%1" } } },
+          { file_pattern = "*.sh",  cloak_pattern = { { "^(%s*export%s+[%w_]+=).+", replace = "%1" } } },
         },
       })
     end,

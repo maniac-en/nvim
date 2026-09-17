@@ -12,7 +12,6 @@ return {
     name = "catppuccin",
     priority = 1000,
     config = function()
-      local colors = require("catppuccin.palettes").get_palette("macchiato")
       require("catppuccin").setup({
         transparent_background = transparent,
         float = {
@@ -25,11 +24,18 @@ return {
           comments = { "italic" },
           functions = { "bold" },
         },
-        custom_highlights = {
-          -- using winbar as my statusline, hide statusline for horizontal splits
-          StatusLine = { bg = colors.base, fg = colors.base },
-          StatusLineNC = { bg = colors.base, fg = colors.base },
-        },
+        -- `colors` is the flavour's palette (plus `none`)
+        custom_highlights = function(colors)
+          return {
+            -- using winbar as my statusline, hide statusline for horizontal splits
+            -- (the separator row between stacked windows is still drawn with it)
+            StatusLine = { bg = transparent and colors.none or colors.base, fg = colors.base },
+            StatusLineNC = { bg = transparent and colors.none or colors.base, fg = colors.base },
+            -- winbar is my statusline: same colors as the editor, bold
+            WinBar = { fg = colors.text, bg = transparent and colors.none or colors.base, style = { "bold" } },
+            WinBarNC = { fg = colors.text, bg = transparent and colors.none or colors.base, style = { "bold" } },
+          }
+        end,
         -- Styles for LSP diagnostics virtual text, underlines and inlay hints
         lsp_styles = {
           virtual_text = {

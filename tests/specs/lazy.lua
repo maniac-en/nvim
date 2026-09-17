@@ -44,9 +44,9 @@ return function(T)
 
   -- commands
   for _, case in ipairs({
-    { cmd = "GV", plugin = "gv.vim" },
+    { cmd = "GV",      plugin = "gv.vim" },
     { cmd = "ZenMode", plugin = "zen-mode.nvim", after = "ZenMode" },
-    { cmd = "FSRead", plugin = "fsread.nvim", after = "FSClear" },
+    { cmd = "FSRead",  plugin = "fsread.nvim",   after = "FSClear" },
   }) do
     T.open("lazy/t.txt")
     local ok, err = pcall(vim.cmd, "silent " .. case.cmd)

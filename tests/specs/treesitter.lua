@@ -47,7 +47,8 @@ return function(T)
     after_move == 5 and vim.api.nvim_win_get_cursor(0)[1] == 11, vim.inspect(vim.api.nvim_win_get_cursor(0)))
   vim.api.nvim_win_set_cursor(0, { 12, 8 })
   T.run_keys("<leader>sa")
-  check("textobjects: <leader>sa swaps arguments", vim.api.nvim_buf_get_lines(buf, 11, 12, false)[1] == '\thelper("x", 1)',
+  check("textobjects: <leader>sa swaps arguments",
+    vim.api.nvim_buf_get_lines(buf, 11, 12, false)[1] == '\thelper("x", 1)',
     vim.api.nvim_buf_get_lines(buf, 11, 12, false)[1])
   vim.cmd("silent undo")
 
@@ -91,10 +92,21 @@ return function(T)
   end
 
   -- http requests as textobjects (queries/http/textobjects.scm)
-  T.write("misc/t.http", { "GET https://example.com", "", "###", "", "POST https://example.com/x", "" })
+  T.write("misc/t.http", {
+    "### Get a user", "# @name getUser", "GET https://example.com/users/1", "Accept: application/json", "",
+    "### Create a user", "POST https://example.com/users", "Content-Type: application/json", "", "{}", "",
+  })
   T.open("misc/t.http")
   check("opening a .http file loads rest.nvim (:Rest available)",
     T.plugin_loaded("rest.nvim") and vim.fn.exists(":Rest") == 2)
-  got = yank_after("var", 5, 0)
-  check("textobjects: var selects an HTTP request (custom query)", got:find("^POST https://example.com/x") ~= nil, got)
+  got = yank_after("vir", 4, 0)
+  check("textobjects: vir selects the request (method line to body)",
+    got:find("^GET https://example.com/users/1\nAccept") ~= nil and not got:find("###"), got)
+  got = yank_after("var", 4, 0)
+  check("textobjects: var selects the whole section (### title, comments, request)",
+    got:find("^### Get a user\n# @name getUser\nGET ") ~= nil and not got:find("Create"), got)
+  vim.api.nvim_win_set_cursor(0, { 3, 0 })
+  T.run_keys("]r")
+  check("textobjects: ]r moves to the next request's ### title line", vim.api.nvim_win_get_cursor(0)[1] == 6,
+    vim.inspect(vim.api.nvim_win_get_cursor(0)))
 end

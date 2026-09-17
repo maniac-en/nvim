@@ -11,7 +11,7 @@ return {
     key("-", "<CMD>Oil<CR>", "Files", "open parent directory (oil)"),
   },
   opts = function()
-    -- Create a module-scoped variable for detail view toggle
+    -- Whether gd shows the detail columns (permissions, size, mtime)
     local detail_view_enabled = false
 
     -- Gitignored entries per directory: one `git ls-files` per directory,
@@ -62,7 +62,8 @@ return {
           if not dir then return false end -- not a local directory (e.g. ssh)
           return git_ignored[dir][name] == true
         end,
-        -- Natural sort order (10.txt comes after 2.txt)
+        -- Directories first, then by name
+        natural_order = "fast", -- 10.txt after 2.txt (off above 5000 entries)
         sort = {
           { "type", "asc" },
           { "name", "asc" },
@@ -92,7 +93,7 @@ return {
           end,
         },
       },
-      -- Status line integration
+      -- Editing behavior
       use_default_keymaps = true,
       delete_to_trash = true,
       skip_confirm_for_simple_edits = true,
@@ -103,10 +104,11 @@ return {
       },
     }
   end,
-  -- Additional setup hook for post-initialization
+  -- setup, plus a smaller scrolloff inside oil buffers
   config = function(_, opts)
     require("oil").setup(opts)
     vim.api.nvim_create_autocmd("FileType", {
+      group = vim.api.nvim_create_augroup("oil_scrolloff", { clear = true }),
       pattern = "oil",
       callback = function()
         vim.opt_local.scrolloff = 3

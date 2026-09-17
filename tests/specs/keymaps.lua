@@ -55,7 +55,10 @@ return function(T)
   keys("<leader>sk")
   local picker
   await(function()
-    local okp, p = pcall(function() return require("telescope.actions.state").get_current_picker(vim.api.nvim_get_current_buf()) end)
+    local okp, p = pcall(function()
+      return require("telescope.actions.state").get_current_picker(vim.api
+        .nvim_get_current_buf())
+    end)
     picker = okp and p or nil
     return picker ~= nil
   end)
@@ -73,7 +76,10 @@ return function(T)
   for _, lhs in ipairs({ "<C-/>", "<C-_>" }) do
     keys(lhs)
     local cbs = await(function()
-      local okp, p = pcall(function() return require("telescope.actions.state").get_current_picker(vim.api.nvim_get_current_buf()) end)
+      local okp, p = pcall(function()
+        return require("telescope.actions.state").get_current_picker(vim.api
+          .nvim_get_current_buf())
+      end)
       return okp and p ~= nil and p.prompt_title == "Current Buffer Fuzzy"
     end)
     check(lhs .. " opens current buffer search", cbs, vim.bo.filetype)

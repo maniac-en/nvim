@@ -3,7 +3,7 @@ local key = require("config.map").lazy
 
 return {
   {
-    'akinsho/toggleterm.nvim',
+    "akinsho/toggleterm.nvim",
     -- no rhs: toggleterm maps <C-\> itself (open_mapping) once loaded
     keys = { key([[<C-\>]], nil, "Terminal", "toggle floating terminal", { mode = { "n", "i" } }) },
     cmd = { "ToggleTerm", "TermExec", "TermSelect", "ToggleTermToggleAll", "ToggleTermSendCurrentLine",
@@ -11,9 +11,9 @@ return {
     version = "*",
     config = true,
     opts = {
-      open_mapping = [[]],
+      open_mapping = [[<C-\>]],
       start_in_insert = true,
-      direction = 'float',
+      direction = "float",
     },
   }
 }
