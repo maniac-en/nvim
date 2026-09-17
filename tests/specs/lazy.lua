@@ -55,10 +55,9 @@ return function(T)
     if case.cmd == "GV" then pcall(vim.cmd, "tabclose") end
   end
 
-  -- VeryLazy plugins
-  for _, name in ipairs({ "Comment.nvim", "vim-surround", "vim-repeat", "vim-unimpaired" }) do
-    check(name .. " loaded on VeryLazy", T.plugin_loaded(name))
-  end
+  -- VeryLazy plugins: vim-repeat has no behaviour of its own to check, the
+  -- others are covered by the functional checks below (and gcc in treesitter)
+  check("vim-repeat loaded on VeryLazy", T.plugin_loaded("vim-repeat"))
   local tbuf = T.open("lazy/t.txt")
   vim.api.nvim_win_set_cursor(0, { 1, 0 })
   T.run_keys('ysiw"')

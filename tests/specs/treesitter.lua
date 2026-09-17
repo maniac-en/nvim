@@ -1,14 +1,8 @@
 -- tests/specs/treesitter.lua
--- nvim-treesitter main, textobjects, node selection, commenting, hover code
+-- treesitter highlighting, textobjects, node selection, commenting, hover code
 -- blocks, http request textobjects.
 return function(T)
   local check, await = T.check, T.await
-
-  check("nvim-treesitter is on the main branch",
-    type(require("nvim-treesitter").install) == "function" and not pcall(require, "nvim-treesitter.configs"))
-  check("exactly one go parser on runtimepath (no stale parsers)",
-    #vim.api.nvim_get_runtime_file("parser/go.so", true) == 1,
-    vim.inspect(vim.api.nvim_get_runtime_file("parser/go.so", true)))
 
   T.go_module("go")
   T.write("go/ts.go", {

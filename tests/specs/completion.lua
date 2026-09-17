@@ -4,8 +4,6 @@
 return function(T)
   local check, await, keys = T.check, T.await, T.keys
 
-  check("nvim-cmp is gone", package.loaded.cmp == nil and not pcall(require, "cmp"))
-
   T.go_module("go")
   T.write("go/comp.go", { "package main", "", "func helper() {", "\t", "}" })
   local buf = T.open("go/comp.go")

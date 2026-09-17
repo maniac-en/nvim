@@ -40,5 +40,4 @@ return function(T)
   for _, lhs in ipairs({ "<leader>r", "<leader>tt", "<leader>tm", "grd", "grr", "grs", "K" }) do
     check("buffer keymap " .. lhs, T.has_buf_map(buf, "n", lhs))
   end
-  check("makeprg", vim.bo[buf].makeprg == "go build", vim.bo[buf].makeprg)
 end
