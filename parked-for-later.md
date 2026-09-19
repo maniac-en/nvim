@@ -21,6 +21,15 @@ Things deliberately postponed. Pick one up when it becomes a real need.
   calls, point `lua/plugins/rest.lua` at the fork, then remove the rest.nvim
   entry from `known_deprecations` in `tests/lib.lua`.
 
+## Switch from rest.nvim to kulala.nvim once its Lua scripts work
+- **Now:** rest.nvim runs `.http` files. kulala.nvim is the maintained
+  alternative, but its Lua response scripts are broken (kulala-core#189);
+  only JavaScript scripts work.
+- **Why parked:** my `.http` scripts are written in Lua.
+- **To revisit:** when kulala-core#189 is fixed. Copy
+  `queries/http/textobjects.scm` to `queries/kulala_http/` so `ir`/`ar`/`]r`
+  keep working. This would also replace the "fork rest.nvim" item above.
+
 ## Switch the AI commit script from Gemini to Claude
 - **Now:** `:AiCommit` (`after/ftplugin/gitcommit.lua`) runs `~/.local/bin/ai-commit-msg.sh`
   (outside this repo). That script calls the Gemini API (`gemini-2.0-flash`, via
