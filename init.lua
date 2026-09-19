@@ -22,7 +22,6 @@ require("config.options")
 require("config.keymaps")
 require("config.autocmds")
 require("config.user_commands")
-require("config.abbreviations")
 require("config.line_completion")
 
 -- Add lazy to the `runtimepath`, this allows us to `require` it.

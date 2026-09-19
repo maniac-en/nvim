@@ -7,7 +7,9 @@ require("config.runner").setup("go run %")
 
 map("n", "<leader>tt", function()
   vim.cmd("write")
-  vim.cmd("vsplit term://go test -v %:p:h/*.go")
+  -- the package in this file's folder: a list of files would skip the tests of
+  -- an external test package (package foo_test)
+  vim.cmd("vsplit term://cd " .. vim.fn.shellescape(vim.fn.expand("%:p:h")) .. " && go test -v .")
   vim.cmd("startinsert")
 end, "Test", "[T]est package", { buffer = true, silent = true })
 

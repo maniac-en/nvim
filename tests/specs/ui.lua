@@ -1,5 +1,5 @@
 -- tests/specs/ui.lua
--- Winbar/statusline look, indentation guessing, config paths.
+-- Winbar/statusline look, indentation guessing, config paths, auto-wrap per filetype.
 return function(T)
   local check = T.check
 
@@ -56,4 +56,15 @@ return function(T)
   T.write("indent_ec/.editorconfig", { "root = true", "", "[*]", "indent_style = space", "indent_size = 8" })
   local ec = indent_of("indent_ec/two.js", { "function f() {", "  return 1;", "}" })
   check("indent: .editorconfig indent_size wins over guessing", ec.sw == 8 and ec.et, vim.inspect(ec))
+
+  -- Lines wrap while typing (formatoptions 't') only in prose filetypes
+  local wraps, wrong = {}, {}
+  for file, prose in pairs({ ["fo/t.md"] = true, ["fo/t.txt"] = true, ["fo/COMMIT_EDITMSG"] = true,
+    ["fo/t.html"] = false, ["fo/t.toml"] = false, ["fo/t.http"] = false, ["fo/t.go"] = false }) do
+    T.write(file, { "x" })
+    T.open(file)
+    wraps[file] = vim.bo.formatoptions:find("t") ~= nil
+    if wraps[file] ~= prose then wrong[#wrong + 1] = ("%s (%s: fo=%s)"):format(file, vim.bo.filetype, vim.bo.formatoptions) end
+  end
+  check("auto-wrap while typing only in markdown, text and commit messages", #wrong == 0, table.concat(wrong, ", "))
 end

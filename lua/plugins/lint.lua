@@ -8,7 +8,9 @@ return {
 
     lint.linters_by_ft = {
       javascript = { "quick-lint-js" },
+      javascriptreact = { "quick-lint-js" },
       typescript = { "quick-lint-js" },
+      typescriptreact = { "quick-lint-js" },
       go = { "golangcilint" },
     }
 

@@ -81,7 +81,8 @@ opt.startofline = true -- Move cursor to 1st non-blank while navigation
 opt.linebreak = true               -- Avoid wrapping in the middle of words
 opt.textwidth = 80                 -- Text width
 opt.wrap = true                    -- Wrap lines
-opt.formatoptions = "jcroqlnt"     -- Text formatting options
+opt.formatoptions = "jcroqln"      -- Text formatting options; no auto-wrap while typing ('t'),
+                                   -- prose filetypes (markdown, gitcommit, text) add it themselves
 opt.backspace = "indent,eol,start" -- Backspace behavior
 
 -- Spelling

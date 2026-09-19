@@ -67,9 +67,11 @@ return function(T)
 
   -- Whole-line completion: <C-x><C-m> (current buffer), <C-x><C-w> (workspace via rg)
   T.write("misc/lines_other.txt", { "unopened = smoke_marker_42 * 2" })
-  T.write("misc/lines.txt", { "in buffer: smoke_marker_42 here", "" })
+  -- (blank line between: in .txt files, typing right under another line would
+  -- auto-format both into one paragraph, formatoptions 'a')
+  T.write("misc/lines.txt", { "in buffer: smoke_marker_42 here", "", "" })
   local lbuf = T.open("misc/lines.txt")
-  vim.api.nvim_win_set_cursor(0, { 2, 0 })
+  vim.api.nvim_win_set_cursor(0, { 3, 0 })
   local function pum_words()
     return vim.tbl_map(function(i) return i.word end, vim.fn.complete_info({ "items" }).items or {})
   end

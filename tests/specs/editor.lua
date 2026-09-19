@@ -1,5 +1,5 @@
 -- tests/specs/editor.lua
--- Runner commands, swap names, trailing whitespace on save, cloak, :AiCommit.
+-- Runner commands, swap names, trailing whitespace on save, cloak, :AiCommit, :W typos.
 return function(T)
   local check = T.check
 
@@ -18,6 +18,21 @@ return function(T)
   local plain = T.open("run/t.txt")
   check(":Run is not defined in other buffers",
     vim.api.nvim_buf_get_commands(plain, {}).Run == nil and vim.api.nvim_get_commands({}).Run == nil)
+
+  -- C: :Run builds into a temporary file and runs it, leaving the folder alone
+  T.write("run_c/hello.c", { "#include <stdio.h>", "int main(void) { puts(\"hello from c\"); return 0; }" })
+  T.write("run_c/out", { "not a binary" })
+  T.open("run_c/hello.c")
+  vim.cmd.lcd(T.root .. "/run_c")
+  vim.cmd("Run")
+  local term = vim.api.nvim_get_current_buf()
+  local ran = T.await(function() return T.text(term):find("hello from c", 1, true) ~= nil end, 20000)
+  local files = vim.fn.readdir(T.root .. "/run_c")
+  check("C :Run builds and runs without touching the folder",
+    ran and vim.deep_equal(files, { "hello.c", "out" }) and vim.fn.readfile(T.root .. "/run_c/out")[1] == "not a binary",
+    ("output=%q files=%s"):format(T.text(term):sub(1, 200), vim.inspect(files)))
+  vim.cmd("stopinsert | silent! only")
+  vim.cmd.lcd(T.root)
 
   -- Same-named files in different directories get distinct swap files ('directory' ends in //)
   T.write("swap/a/same.txt", { "a" })
@@ -70,4 +85,14 @@ return function(T)
   vim.cmd("enew | setfiletype gitcommit")
   check("gitcommit: :AiCommit is buffer-local", vim.api.nvim_buf_get_commands(0, {}).AiCommit ~= nil
     and vim.api.nvim_get_commands({}).AiCommit == nil)
+
+  -- Shift-held typos: :W saves, but a W typed in a search stays a W
+  T.write("typo/t.txt", { "Width W here" })
+  local tbuf = T.open("typo/t.txt")
+  vim.api.nvim_buf_set_lines(tbuf, 0, -1, false, { "changed" })
+  T.run_keys(":W<CR>")
+  check(":W saves the file", not vim.bo[tbuf].modified and vim.fn.readfile(T.root .. "/typo/t.txt")[1] == "changed")
+  vim.api.nvim_buf_set_lines(tbuf, 0, -1, false, { "Width W here" })
+  T.run_keys("gg0/W <CR>")
+  check("a W typed in a search stays W", vim.fn.getreg("/") == "W ", vim.inspect(vim.fn.getreg("/")))
 end

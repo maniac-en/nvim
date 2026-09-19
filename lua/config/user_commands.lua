@@ -5,6 +5,18 @@ vim.api.nvim_create_user_command("Browse", function(opts)
   if err then vim.notify(err, vim.log.levels.ERROR) end
 end, { nargs = 1, desc = "Open a URL in the browser" })
 
+-- Shift-held typos: :W, :WA, :Wa, :WQ, :Wq do what the lowercase command does.
+-- Real commands, not abbreviations, so typing W in a search or elsewhere on the
+-- command line stays W.
+for typo, command in pairs({ W = "w", WA = "wa", Wa = "wa", WQ = "wq", Wq = "wq" }) do
+  vim.api.nvim_create_user_command(typo, command .. "<bang> <args>", {
+    bang = true,
+    nargs = "?",
+    complete = "file",
+    desc = ":" .. command .. " (typo)",
+  })
+end
+
 -- https://www.reddit.com/r/neovim/comments/zhweuc/comment/izo9br1/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
 vim.api.nvim_create_user_command("Redir", function(ctx)
   local lines = vim.split(vim.api.nvim_exec2(ctx.args, { output = true })["output"], "\n", { plain = true })
