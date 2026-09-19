@@ -108,8 +108,36 @@ return function(T)
   T.write("dbg/notes.txt", { "x" })
   local plain = T.open("dbg/notes.txt")
   local py = T.open("dbg/app.py")
-  check("<leader>dT (library code too) in Python buffers", T.has_buf_map(py, "n", "<leader>dT"))
   check("<leader>dt only in Python/Go buffers",
     T.has_buf_map(py, "n", "<leader>dt") and vim.fn.maparg("<leader>dt", "n") ~= ""
       and vim.api.nvim_buf_call(plain, function() return vim.fn.maparg("<leader>dt", "n") == "" end))
+
+  -- Python <leader>dt offers the runners (pytest first) and passes the choice on;
+  -- checked without starting a session (pytest may not be installed)
+  do
+    local dap = require("dap")
+    T.write("dbg/test_calc.py", { "def test_add():", "    assert 2 + 3 == 5" })
+    T.open("dbg/test_calc.py")
+    vim.api.nvim_win_set_cursor(0, { 2, 4 })
+    local real_select, real_run = vim.ui.select, dap.run
+    local labels, runs = {}, {}
+    for _, pick in ipairs({ 1, 2, 3 }) do
+      vim.ui.select = function(items, opts, on_choice)
+        labels = vim.tbl_map(opts.format_item, items)
+        on_choice(items[pick])
+      end
+      dap.run = function(config) runs[#runs + 1] = config end
+      T.run_keys("<leader>dt")
+    end
+    vim.ui.select, dap.run = real_select, real_run
+    check("python <leader>dt offers pytest first, then unittest and library-code variants",
+      vim.deep_equal(labels, { "pytest", "unittest", "pytest (library code too)", "unittest (library code too)" }),
+      vim.inspect(labels))
+    local function args(i) return runs[i] and table.concat(runs[i].args or {}, " ") or "" end
+    check("pytest choice runs just this test with pytest",
+      runs[1] and runs[1].module == "pytest" and args(1):find("test_calc.py::test_add", 1, true) ~= nil
+        and runs[1].justMyCode == nil, vim.inspect(runs[1]))
+    check("unittest choice runs it with unittest", runs[2] and runs[2].module == "unittest", vim.inspect(runs[2]))
+    check("library-code choice turns off justMyCode", runs[3] and runs[3].justMyCode == false, vim.inspect(runs[3]))
+  end
 end

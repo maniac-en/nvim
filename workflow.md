@@ -148,16 +148,21 @@ definition in a split, `<C-o>` / `<Tab>` older / newer jump position.
 | `<leader>dq` | quit (terminate) the session |
 | `<leader>du` | toggle the debug UI (it opens and closes with the session by itself) |
 | `<leader>de` | evaluate the expression under the cursor, or the selection |
-| `<leader>dt` | Python / Go: debug the test under the cursor |
-| `<leader>dT` | Python: the same, stepping into library code too |
+| `<leader>dt` | debug the test under the cursor (Python: pick the runner, `Enter` = pytest) |
 
 The program runs with the project's Python (`$VIRTUAL_ENV`, else `.venv`/`venv`
 in the project); debugpy itself lives in Mason. Go needs a module (`go.mod`).
 
+**Debugging a test.** Put a breakpoint (`<leader>db`), keep the cursor inside
+the test, press `<leader>dt`. Only that test runs, under the debugger. In Go it
+starts right away; in Python a picker offers pytest (default, runs
+`unittest.TestCase` classes too), unittest (projects without pytest), and both
+again with library code. `<leader>dl` re-runs the same choice.
+
 **Stepping into library code.** Python's debugger skips code that isn't yours
-by default ("just my code"). To follow a call into a library, start with `F5` and
-pick a configuration ending in **(library code too)**, e.g. "file (library code
-too)", or use `<leader>dT` for a test. Go has no such switch: Delve already steps
+by default ("just my code"). To follow a call into a library, pick an entry
+ending in **(library code too)**: in the `F5` list (e.g. "file (library code
+too)") or in the `<leader>dt` picker. Go has no such switch: Delve already steps
 into the standard library and dependencies.
 
 ## Move around the code

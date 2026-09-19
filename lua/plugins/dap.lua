@@ -10,19 +10,34 @@ local function debug_key(lhs, rhs, text, opts)
   return key(lhs, rhs, "Debug", text, vim.tbl_extend("force", { silent = true }, opts or {}))
 end
 
--- Debug the test under the cursor: the Python method, or the Go test function
-local function debug_test()
-  if vim.bo.filetype == "python" then
-    require("dap-python").test_method()
-  elseif vim.bo.filetype == "go" then
-    require("dap-go").debug_test()
-  end
-end
+-- Python test runs offered by <leader>dt, default first. pytest also runs
+-- unittest.TestCase classes; unittest is for projects without pytest. "Library
+-- code too" turns off debugpy's justMyCode (Delve has no such switch: it already
+-- steps into libraries, so Go starts right away)
+local python_test_runs = {
+  { label = "pytest", runner = "pytest" },
+  { label = "unittest", runner = "unittest" },
+  { label = "pytest (library code too)", runner = "pytest", all_code = true },
+  { label = "unittest (library code too)", runner = "unittest", all_code = true },
+}
 
--- Python only: debugpy skips library code by default (justMyCode); Delve always
--- steps into libraries whose source it has, so Go needs no switch
-local function debug_test_all_code()
-  require("dap-python").test_method({ config = { justMyCode = false } })
+-- Debug the test under the cursor: the Go test function, or the Python test
+-- (after picking how to run it)
+local function debug_test()
+  if vim.bo.filetype == "go" then
+    require("dap-go").debug_test()
+  elseif vim.bo.filetype == "python" then
+    vim.ui.select(python_test_runs, {
+      prompt = "Debug the test with",
+      format_item = function(run) return run.label end,
+    }, function(run)
+      if not run then return end
+      require("dap-python").test_method({
+        test_runner = run.runner,
+        config = run.all_code and { justMyCode = false } or nil,
+      })
+    end)
+  end
 end
 
 return {
@@ -49,9 +64,8 @@ return {
       debug_key("<leader>du", function() require("dapui").toggle() end, "toggle the debug [U]I"),
       debug_key("<leader>de", function() require("dapui").eval() end, "[E]valuate expression under cursor",
         { mode = { "n", "x" } }),
-      debug_key("<leader>dt", debug_test, "debug the [T]est under the cursor", { ft = { "python", "go" } }),
-      debug_key("<leader>dT", debug_test_all_code, "debug the [T]est, stepping into library code too",
-        { ft = "python" }),
+      debug_key("<leader>dt", debug_test, "debug the [T]est under the cursor (Python: pick the runner)",
+        { ft = { "python", "go" } }),
     },
     config = function()
       local dapui = require("dapui")
