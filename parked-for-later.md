@@ -22,7 +22,7 @@ Things deliberately postponed. Pick one up when it becomes a real need.
   entry from `known_deprecations` in `tests/lib.lua`.
 
 ## Switch the AI commit script from Gemini to Claude
-- **Now:** `:AiCommit` (`ftplugin/gitcommit.lua`) runs `~/.local/bin/ai-commit-msg.sh`
+- **Now:** `:AiCommit` (`after/ftplugin/gitcommit.lua`) runs `~/.local/bin/ai-commit-msg.sh`
   (outside this repo). That script calls the Gemini API (`gemini-2.0-flash`, via
   `curl`, with `GEMINI_API_KEY`) and writes the message into the commit file.
 - **Why parked:** it's a change to an external script, separate from the
@@ -49,7 +49,7 @@ the plugin.
 
 ## Try treesitter code folding
 - **Now:** manual folding only (`foldmethod=manual`), buffers start unfolded.
-- **Why parked:** folds aren't part of the workflow yet; `gO` / `<leader>ds`
+- **Why parked:** folds aren't part of the workflow yet; `grs` / `gO`
   (outline) and `]f` / `[f` (jump between functions) cover "overview and jump".
 - **To try:** in `lua/config/options.lua` set
   `opt.foldmethod = "expr"` and `opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"`
@@ -57,3 +57,14 @@ the plugin.
   `zM` close all (outline view), `zo`/`zc`/`za` open/close/toggle the one under
   the cursor, `zR` open all, `zj`/`zk` next/previous fold, `zv` reveal the cursor line.
   Good for skimming long files and hiding big literals or test tables.
+
+## JS/TS debugging
+- **Now:** debugging covers Python (debugpy) and Go (Delve) only; `F5` and
+  `<leader>d…` do nothing useful in JS/TS files.
+- **Why parked:** no JS/TS project to set it up against. Launch settings depend
+  on the project (node, ts-node, browser, source maps), so settings written
+  without one would probably not fit.
+- **To revisit:** with the first real JS/TS project: add `js-debug-adapter` to
+  the Mason list (`lua/plugins/lsp/tools.lua`), register its `pwa-node` /
+  `pwa-chrome` adapters and a launch configuration in `lua/plugins/dap.lua`,
+  and extend `tests/specs/dap.lua` with a real node session. The keys stay the same.
