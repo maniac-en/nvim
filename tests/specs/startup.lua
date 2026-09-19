@@ -49,4 +49,27 @@ return function(T)
   local res4 = vim.system({ "nvim", "--headless", "-i", "NONE", "+" .. select_probe, "+qa!" }, { text = true }):wait(30000)
   check("first vim.ui.select loads telescope's ui-select",
     (res4.stdout or ""):find("telescope%-ui%-select") ~= nil, (res4.stdout or "") .. (res4.stderr or ""))
+  -- Mason: every expected tool is installed, every enabled server's package is on
+  -- the list, and nothing installed is off it (leftovers)
+  local lists = require("plugins.lsp.tools")
+  require("lazy").load({ plugins = { "mason.nvim" } })
+  local registry = require("mason-registry")
+  local missing = vim.tbl_filter(function(name)
+    local ok, pkg = pcall(registry.get_package, name)
+    return not ok or not pkg:is_installed()
+  end, lists.mason)
+  check("every tool on the Mason list is installed", #missing == 0, "missing: " .. table.concat(missing, ", "))
+  local package_of = {}
+  for _, pkg in ipairs(registry.get_all_packages()) do
+    local lspconfig = pkg.spec.neovim and pkg.spec.neovim.lspconfig
+    if lspconfig then package_of[lspconfig] = pkg.name end
+  end
+  local unlisted = vim.tbl_filter(function(server)
+    return not vim.tbl_contains(lists.mason, package_of[server])
+  end, lists.servers)
+  check("every enabled server's Mason package is on the list", #unlisted == 0,
+    table.concat(vim.tbl_map(function(s) return s .. " → " .. tostring(package_of[s]) end, unlisted), ", "))
+  local extra = vim.tbl_filter(function(name) return not vim.tbl_contains(lists.mason, name) end,
+    registry.get_installed_package_names())
+  check("no installed Mason packages outside the list", #extra == 0, "extra: " .. table.concat(extra, ", "))
 end

@@ -214,6 +214,26 @@ search, `.` repeat the last change, `gx` open the link under the cursor.
 
 ---
 
+## Setting up a new machine
+
+**Mason tools install themselves.** The list is in `lua/plugins/lsp/tools.lua`;
+anything missing installs in the background the first time a file is opened.
+Updates stay manual (`:Mason`, then `U`).
+
+**Install these yourself first** (Mason can't, and some Mason installs need them):
+
+| Tool | Needed for |
+|---|---|
+| `git`, `curl`, `unzip`, `tar`, `gzip` | lazy.nvim and Mason downloads |
+| `gcc`, `make` | treesitter parsers, telescope's fzf sorter, C |
+| `go` | Go itself; Mason builds gopls, Delve and golangci-lint with it |
+| `python3` (with `venv`) | Python itself; Mason puts ruff/debugpy in their own venvs |
+| `node`, `npm` | JS/TS; Mason installs the web language servers with npm |
+| `rg` (ripgrep) | telescope's live grep and word search |
+| `xclip` | the system clipboard (`<C-y>`, `"+p`) |
+
+`pytest` goes in each project's venv if you want to debug pytest tests.
+
 ## Adding a language
 
 `after/ftplugin/<ft>.lua` (runner via `require("config.runner").setup(...)`,
