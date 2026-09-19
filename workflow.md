@@ -149,9 +149,16 @@ definition in a split, `<C-o>` / `<Tab>` older / newer jump position.
 | `<leader>du` | toggle the debug UI (it opens and closes with the session by itself) |
 | `<leader>de` | evaluate the expression under the cursor, or the selection |
 | `<leader>dt` | Python / Go: debug the test under the cursor |
+| `<leader>dT` | Python: the same, stepping into library code too |
 
 The program runs with the project's Python (`$VIRTUAL_ENV`, else `.venv`/`venv`
 in the project); debugpy itself lives in Mason. Go needs a module (`go.mod`).
+
+**Stepping into library code.** Python's debugger skips code that isn't yours
+by default ("just my code"). To follow a call into a library, start with `F5` and
+pick a configuration ending in **(library code too)**, e.g. "file (library code
+too)", or use `<leader>dT` for a test. Go has no such switch: Delve already steps
+into the standard library and dependencies.
 
 ## Move around the code
 

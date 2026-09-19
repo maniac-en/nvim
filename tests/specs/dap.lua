@@ -58,6 +58,44 @@ return function(T)
   T.write("dbg/app.py", { "def add(a, b):", "    total = a + b", "    return total", "", "print(add(2, 3))" })
   session("python", "dbg/app.py", "file", 2, 20000)
 
+  -- Stepping into json.dumps: "file" stays in our code (debugpy's justMyCode),
+  -- "file (library code too)" lands in the standard library's json module
+  do
+    local dap = require("dap")
+    T.write("dbg/lib.py", { "import json", "", 'payload = json.dumps({"a": 1})', "print(payload)" })
+    local buf = T.open("dbg/lib.py")
+    require("dap.breakpoints").set({}, buf, 3)
+    local function step_into_with(name)
+      local config
+      for _, c in ipairs(dap.configurations.python) do
+        if c.name == name then config = c end
+      end
+      if not config then return "no config " .. name end
+      dap.run(config)
+      await(function()
+        local s = dap.session()
+        return s ~= nil and s.current_frame ~= nil and s.current_frame.line == 3
+      end, 20000)
+      local before = dap.session() and dap.session().current_frame
+      dap.step_into()
+      await(function()
+        local s = dap.session()
+        return s ~= nil and s.current_frame ~= nil and s.current_frame ~= before
+      end, 10000)
+      local frame = dap.session() and dap.session().current_frame
+      local where = frame and ((frame.source and frame.source.path or "?") .. ":" .. frame.line) or "?"
+      dap.continue()
+      await(function() return dap.session() == nil end, 10000)
+      return where
+    end
+    local mine = step_into_with("file")
+    check("python: \"file\" steps over library code (justMyCode)", mine:find("lib%.py:4$") ~= nil, mine)
+    local all = step_into_with("file (library code too)")
+    check("python: \"file (library code too)\" steps into the json module", all:find("/json/") ~= nil, all)
+    dap.clear_breakpoints()
+    vim.cmd("silent! only")
+  end
+
   T.go_module("dbg_go")
   T.write("dbg_go/main.go", {
     "package main", "", 'import "fmt"', "",
@@ -70,6 +108,7 @@ return function(T)
   T.write("dbg/notes.txt", { "x" })
   local plain = T.open("dbg/notes.txt")
   local py = T.open("dbg/app.py")
+  check("<leader>dT (library code too) in Python buffers", T.has_buf_map(py, "n", "<leader>dT"))
   check("<leader>dt only in Python/Go buffers",
     T.has_buf_map(py, "n", "<leader>dt") and vim.fn.maparg("<leader>dt", "n") ~= ""
       and vim.api.nvim_buf_call(plain, function() return vim.fn.maparg("<leader>dt", "n") == "" end))

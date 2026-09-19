@@ -19,6 +19,12 @@ local function debug_test()
   end
 end
 
+-- Python only: debugpy skips library code by default (justMyCode); Delve always
+-- steps into libraries whose source it has, so Go needs no switch
+local function debug_test_all_code()
+  require("dap-python").test_method({ config = { justMyCode = false } })
+end
+
 return {
   {
     "mfussenegger/nvim-dap",
@@ -44,6 +50,8 @@ return {
       debug_key("<leader>de", function() require("dapui").eval() end, "[E]valuate expression under cursor",
         { mode = { "n", "x" } }),
       debug_key("<leader>dt", debug_test, "debug the [T]est under the cursor", { ft = { "python", "go" } }),
+      debug_key("<leader>dT", debug_test_all_code, "debug the [T]est, stepping into library code too",
+        { ft = "python" }),
     },
     config = function()
       local dapui = require("dapui")
@@ -52,6 +60,17 @@ return {
       -- Python: debugpy from Mason's own virtualenv; the program itself runs with
       -- the project's Python ($VIRTUAL_ENV, else .venv/venv in the project)
       require("dap-python").setup(vim.fn.stdpath("data") .. "/mason/packages/debugpy/venv/bin/python")
+      -- A twin of each launch configuration that steps into library code too
+      -- (picked from the list F5 shows)
+      local python = dap().configurations.python
+      for _, config in ipairs(vim.deepcopy(python)) do
+        if config.request == "launch" then
+          table.insert(python, vim.tbl_extend("force", config, {
+            name = config.name .. " (library code too)",
+            justMyCode = false,
+          }))
+        end
+      end
       -- Go: Delve (dlv, from Mason)
       require("dap-go").setup()
 
