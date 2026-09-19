@@ -127,14 +127,31 @@ definition in a split, `<C-o>` / `<Tab>` older / newer jump position.
 | `ih` / `ah` | hunk textobject (`vih`, `dah`) |
 | `]c` `[c` | inside a diff: next / previous change (classes elsewhere) |
 
-## Run, test, debug
+## Run, test
 
 | Key | Does |
 |---|---|
 | `<leader>r` | run this file (`:Run`; Go, Python, C, JS/TS, Lua; `.http`: the request) |
 | `<leader>tt` | Go: test the package |
 | `<leader>tm` | Go: test with a main file |
-| `<leader>d…` | reserved for debugging (DAP, not set up yet) |
+
+## Debug (nvim-dap + nvim-dap-ui; debugpy for Python, Delve for Go)
+
+| Key | Does |
+|---|---|
+| `F5` | start / continue (asks which configuration on first start, e.g. "file" or "Debug") |
+| `F10` / `F11` / `F12` | step over / into / out |
+| `<leader>db` | toggle breakpoint (red dot) |
+| `<leader>dB` | conditional breakpoint (asks for the condition) |
+| `<leader>dc` | run to the cursor |
+| `<leader>dl` | re-run the last session |
+| `<leader>dq` | quit (terminate) the session |
+| `<leader>du` | toggle the debug UI (it opens and closes with the session by itself) |
+| `<leader>de` | evaluate the expression under the cursor, or the selection |
+| `<leader>dt` | Python / Go: debug the test under the cursor |
+
+The program runs with the project's Python (`$VIRTUAL_ENV`, else `.venv`/`venv`
+in the project); debugpy itself lives in Mason. Go needs a module (`go.mod`).
 
 ## Move around the code
 

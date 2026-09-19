@@ -113,6 +113,7 @@ end
 local known_deprecations = {
   { stack = "/rest.nvim/",       note = "rest.nvim vim.validate{} (parked: fork rest.nvim)" },
   { stack = "/toggleterm.nvim/", note = "toggleterm vim.validate{} (tolerated)" },
+  { stack = "/nvim-dap-ui/",     note = "nvim-dap-ui vim.str_utfindex (tolerated; removed only in Nvim 1.0)" },
 }
 
 local function health()

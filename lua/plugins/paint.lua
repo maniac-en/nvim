@@ -60,6 +60,8 @@ return {
         integrations = {
           treesitter = true,
           blink_cmp = true,
+          dap = true,
+          dap_ui = true,
           mason = true,
           dadbod_ui = true,
           gitsigns = {
