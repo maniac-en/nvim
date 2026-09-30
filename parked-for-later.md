@@ -77,3 +77,23 @@ the plugin.
   the Mason list (`lua/plugins/lsp/tools.lua`), register its `pwa-node` /
   `pwa-chrome` adapters and a launch configuration in `lua/plugins/dap.lua`,
   and extend `tests/specs/dap.lua` with a real node session. The keys stay the same.
+
+## WezTerm mispaints the other window of a vertical split
+- **Now:** with two vertical splits, scrolling in one leaves a stale rectangle
+  in the *other* one -- part of its text shows content from an earlier scroll
+  position, and the CursorLine highlight stops at the same column. `<C-l>`
+  (or `:redraw!`) clears it. Nothing in this config causes it: Neovim's screen
+  grid is byte-identical whether the left or the right window is focused, so
+  the text is drawn correctly and only the terminal paints it wrong. Known
+  upstream: neovim#34120 (closed, `status:blocked-external`) and wezterm#5488.
+- **Why parked:** every cheap lever was tried and none helped --
+  `vim.o.termsync = false` (frame batching), `config.front_end = "Software"`
+  (bypasses the GPU renderer), and `config.term = "wezterm"` (its own terminfo,
+  which unlike xterm-256color omits smglr/DECSLRM). Neovim also emits no
+  scroll-region or margin sequences here; it repaints cell by cell, so there is
+  nothing left for it to do differently. That puts the bug in WezTerm's damage
+  tracking, which this config cannot reach.
+- **To revisit:** WezTerm's last stable release is 20240203 (Feb 2024) and
+  there has been none since, so the options are a WezTerm nightly or a
+  different terminal (Ghostty, kitty, Alacritty). Reproduce the same way:
+  vertical split, focus one window, scroll, watch the other one's text.
