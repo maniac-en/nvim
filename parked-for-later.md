@@ -97,3 +97,17 @@ the plugin.
   there has been none since, so the options are a WezTerm nightly or a
   different terminal (Ghostty, kitty, Alacritty). Reproduce the same way:
   vertical split, focus one window, scroll, watch the other one's text.
+
+## Duplicate gopls diagnostics in the float
+- **Now:** in a Go buffer, the diagnostic float sometimes shows the same error
+  twice (e.g. `compiler> declared and not used: x [UnusedVar]`).
+- **Ruled out:** golangci-lint (it never sets a code like `[UnusedVar]`), a
+  second gopls client (only one attached), and the file being opened through a
+  symlink. A minimal module with gopls v0.23 / Neovim 0.12.5 didn't reproduce it,
+  even after edits, saves and adding a `_test.go` file.
+- **Why parked:** it's cosmetic and only happens intermittently.
+- **To revisit:** while the duplicate is showing, run
+  `:lua for _,d in ipairs(vim.diagnostic.get(0)) do print(vim.diagnostic.get_namespace(d.namespace).name, d.source, d.code, d.lnum+1, d.message) end`.
+  Same namespace twice means gopls sends the error twice (check the project's
+  `go.work` and build tags). Two namespaces means Neovim receives it through two
+  channels. Note what happened just before it appeared.
