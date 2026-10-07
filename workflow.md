@@ -132,7 +132,7 @@ definition in a split, `<C-o>` / `<Tab>` older / newer jump position.
 | Key | Does |
 |---|---|
 | `<leader>r` | run this file (`:Run`; Go, Python, C, JS/TS, Lua; `.http`: the request) |
-| `<leader>tt` | Go: test the package |
+| `<leader>tt` | Go: test the package (asks: normal or verbose) |
 | `<leader>tm` | Go: test with a main file |
 
 ## Debug (nvim-dap + nvim-dap-ui; debugpy for Python, Delve for Go)

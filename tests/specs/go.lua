@@ -50,14 +50,49 @@ return function(T)
   T.write("calc/external_test.go", { "package calc_test", "", 'import (', '\t"testing"', "",
     '\t"example.com/calc"', ")", "", "func TestAddExternal(t *testing.T) { if calc.Add(1, 1) != 2 { t.Fatal() } }" })
   T.open("calc/calc.go")
-  T.run_keys("<leader>tt")
-  local term = vim.api.nvim_get_current_buf()
-  local done = T.await(function()
-    return T.text(term):find("\nok ") ~= nil or T.text(term):find("FAIL") ~= nil
-  end, 60000)
-  local out = T.text(term)
-  check("<leader>tt runs internal and external tests of the package",
-    done and out:find("PASS: TestAdd ", 1, true) ~= nil and out:find("PASS: TestAddExternal", 1, true) ~= nil,
-    out:sub(1, 600))
-  vim.cmd("stopinsert")
+
+  -- "ok <pkg>" is the first line of a normal run, a later one when verbose
+  local function finished(out) return out:match("^ok ") or out:find("\nok ") or out:find("FAIL") end
+
+  -- <leader>tt picks a mode first (telescope via vim.ui.select); filtering by
+  -- the label and hitting <CR> runs that variant in a terminal split
+  local function test_package(mode)
+    T.open("calc/calc.go")
+    T.run_keys("<leader>tt")
+    local state, picker = require("telescope.actions.state"), nil
+    T.await(function()
+      local ok, pk = pcall(state.get_current_picker, vim.api.nvim_get_current_buf())
+      picker = ok and pk or nil
+      return picker ~= nil
+    end)
+    if not picker then return nil, "no picker for <leader>tt" end
+    picker:set_prompt(mode)
+    -- wait for the sorter: hitting <CR> before it lands selects nothing
+    local selected = T.await(function()
+      local entry = picker:get_selection()
+      return entry and entry.value and entry.value.text.label == mode
+    end, 5000)
+    if not selected then
+      require("telescope.actions").close(picker.prompt_bufnr)
+      return nil, "picker did not select " .. mode
+    end
+    require("telescope.actions").select_default(picker.prompt_bufnr)
+    local term
+    local done = T.await(function()
+      term = vim.api.nvim_get_current_buf()
+      return vim.bo[term].buftype == "terminal" and finished(T.text(term)) ~= nil
+    end, 60000)
+    vim.cmd("stopinsert")
+    return done and T.text(term) or nil, term and T.text(term):sub(1, 600) or "no terminal"
+  end
+
+  local out, detail = test_package("verbose")
+  check("<leader>tt verbose runs internal and external tests of the package",
+    out and out:find("PASS: TestAdd ", 1, true) ~= nil and out:find("PASS: TestAddExternal", 1, true) ~= nil,
+    detail)
+
+  out, detail = test_package("normal")
+  check("<leader>tt normal runs the package without per-test output",
+    out and out:match("^ok ") ~= nil and out:find("PASS: TestAdd", 1, true) == nil,
+    detail)
 end
