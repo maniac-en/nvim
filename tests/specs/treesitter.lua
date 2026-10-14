@@ -60,6 +60,40 @@ return function(T)
     vim.api.nvim_buf_get_lines(buf, 11, 12, false)[1])
   vim.cmd("silent undo")
 
+  -- Sticky scroll (nvim-treesitter-context): with the cursor deep in a block and
+  -- its opening lines scrolled off, those lines are pinned at the top
+  local function pinned(path, lines, row)
+    T.write(path, lines)
+    T.open(path)
+    vim.api.nvim_win_set_cursor(0, { row, 0 })
+    vim.cmd("normal! zt")
+    vim.treesitter.get_parser():parse() -- trees refresh on redraw only
+    vim.cmd("doautocmd CursorMoved")
+    local text
+    await(function()
+      for _, w in ipairs(vim.api.nvim_list_wins()) do
+        if vim.w[w].treesitter_context then -- the plugin's float (not its line-number gutter)
+          text = table.concat(vim.tbl_map(vim.trim, T.lines(vim.api.nvim_win_get_buf(w))), " | ")
+          return true
+        end
+      end
+    end, 3000)
+    return text
+  end
+  local function body(indent, n)
+    local t = {}
+    for i = 1, n do t[i] = indent .. "x = " .. i end
+    return t
+  end
+  local go_lines = vim.list_extend({ "package main", "", "func check(x int) {", "\tif x > 0 {" }, body("\t\t", 30))
+  vim.list_extend(go_lines, { "\t}", "}" })
+  local got_go = pinned("ctx/main.go", go_lines, 25)
+  check("sticky scroll: Go function and if lines pinned", got_go == "func check(x int) { | if x > 0 {", got_go)
+  local py_lines = vim.list_extend({ "def check(x):", "    if x > 0:", "        x = 0", "    else:" }, body("        ", 30))
+  local got_py = pinned("ctx/main.py", py_lines, 25)
+  check("sticky scroll: Python else branch pinned", got_py == "def check(x): | if x > 0: | else:", got_py)
+  T.open("go/ts.go")
+
   -- K hover with a code block: its markdown injections must parse (the old
   -- master branch crashed here and turned highlighting off)
   T.wait_client(buf, "gopls")

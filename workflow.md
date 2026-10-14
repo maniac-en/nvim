@@ -179,6 +179,12 @@ into the standard library and dependencies.
 | `<C-Space>` | select the syntax node under the cursor; again grows, `<C-BS>` shrinks |
 | `n` `N`, `<C-d>` `<C-u>` | search results and half-page scroll, kept centred |
 
+Sticky scroll: once the opening lines of the function / `if` / `for` around the
+cursor scroll off the top, they stay pinned there (up to 5 lines).
+`:TSContext toggle` turns it off and on. Go limitation: inside an `else` branch
+the pinned line is the `if` line, as Go's syntax tree has no separate `else`
+(`else if` is pinned fine; Python's `elif` / `else` are too).
+
 ### Textobjects (after `v`, `d`, `c`, `y`)
 
 `am`/`im` method · `af`/`if` function call · `ac`/`ic` class · `aa`/`ia` argument

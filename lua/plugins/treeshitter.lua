@@ -176,4 +176,21 @@ return {
       })
     end,
   },
+
+  -- Sticky scroll (like VS Code): the opening lines of the function, if, for, ...
+  -- around the cursor stay pinned at the top of the window once they scroll off.
+  -- Toggle: :TSContext toggle
+  {
+    "nvim-treesitter/nvim-treesitter-context",
+    event = { "BufReadPost", "BufNewFile" },
+    opts = {
+      enable = true,
+      mode = "cursor",          -- context of the cursor line, not the top line
+      max_lines = 5,            -- pin at most 5 lines...
+      trim_scope = "outer",     -- ...dropping the outermost ones beyond that
+      multiline_threshold = 20, -- longest single context shown (e.g. a long signature)
+      line_numbers = true,
+      separator = nil,          -- no separator line under the pinned lines
+    },
+  },
 }
